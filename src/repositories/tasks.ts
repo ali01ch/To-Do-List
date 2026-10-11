@@ -1,6 +1,6 @@
 import type { RoznoDatabase } from '@/db/database'
 import { DataError, guard } from '@/domain/errors'
-import type { Task, TaskPatch, NewTask } from '@/domain/types'
+import type { NewTask, Task, TaskPatch, TaskTag } from '@/domain/types'
 import { buildTask, mergeTask } from '@/domain/validation'
 import { nowIso } from '@/utils/dates'
 import { createId } from '@/utils/id'
@@ -148,6 +148,10 @@ export function createTaskRepository(database: RoznoDatabase) {
           }
         }),
       )
+    },
+
+    async listLinks(): Promise<TaskTag[]> {
+      return guard(() => database.taskTags.toArray())
     },
 
     async tagIds(taskId: string): Promise<string[]> {

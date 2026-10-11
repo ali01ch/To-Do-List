@@ -46,6 +46,13 @@ export function todayDueOn(now = new Date()): string {
   return `${year}-${month}-${day}`
 }
 
+export function addDays(dueOn: string, days: number): string {
+  const [year, month, day] = dueOn.split('-').map(Number) as [number, number, number]
+  const date = new Date(year, month - 1, day)
+  date.setDate(date.getDate() + days)
+  return todayDueOn(date)
+}
+
 export function nowIso(now = new Date()): string {
   return now.toISOString()
 }

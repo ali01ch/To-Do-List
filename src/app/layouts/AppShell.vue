@@ -1,20 +1,63 @@
 <script setup lang="ts">
-import { computed } from 'vue'
+import { Plus } from '@lucide/vue'
+import { computed, onMounted, onUnmounted, watch } from 'vue'
 import { RouterLink, RouterView, useRoute } from 'vue-router'
 import { isMoreSection, libraryNav, moreNav, primaryNav } from '@/app/navigation'
-import BrandMark from '@/components/BrandMark.vue'
 import AppButton from '@/components/AppButton.vue'
+import BrandMark from '@/components/BrandMark.vue'
+import TaskSheet from '@/components/TaskSheet.vue'
 import { errorText, fa } from '@/locales/fa'
 import { useAppStore } from '@/stores/appStore'
+import { useCatalogStore, type CreatePreset } from '@/stores/catalogStore'
+import { useViewStore } from '@/stores/viewStore'
+import { addDays, todayDueOn } from '@/utils/dates'
 
 const route = useRoute()
 const store = useAppStore()
+const catalog = useCatalogStore()
+const view = useViewStore()
 const moreActive = computed(() => isMoreSection(route.name))
 const errorMessage = computed(() => (store.dbError ? errorText(store.dbError) : fa.errors.UNKNOWN))
+const showFab = computed(
+  () =>
+    ['today', 'upcoming', 'inbox', 'tasks', 'calendar', 'list'].includes(String(route.name)) &&
+    catalog.editor === null &&
+    !catalog.undoEntry &&
+    !catalog.notice,
+)
+
+watch(
+  () => store.dbStatus,
+  (status) => {
+    if (status === 'ready' && catalog.status === 'idle') void catalog.load()
+  },
+  { immediate: true },
+)
 
 function isCurrent(name: string): boolean {
+  if (name === 'lists' && (route.name === 'lists' || route.name === 'list')) return true
   return route.name === name
 }
+
+function createPreset(): CreatePreset {
+  if (route.name === 'today') return { dueOn: todayDueOn() }
+  if (route.name === 'upcoming') return { dueOn: addDays(todayDueOn(), 1) }
+  if (route.name === 'inbox') return { dueOn: null }
+  if (route.name === 'calendar') return { dueOn: view.calendarDueOn ?? todayDueOn() }
+  if (route.name === 'list') return { listId: String(route.params.id) }
+  return {}
+}
+
+function onKeydown(event: KeyboardEvent): void {
+  const target = event.target
+  if (target instanceof HTMLElement && target.closest('input, textarea, select, [contenteditable="true"]')) return
+  if (event.key.toLowerCase() !== 'n' || event.metaKey || event.ctrlKey || event.altKey) return
+  event.preventDefault()
+  catalog.openCreate(createPreset())
+}
+
+onMounted(() => window.addEventListener('keydown', onKeydown))
+onUnmounted(() => window.removeEventListener('keydown', onKeydown))
 </script>
 
 <template>
@@ -80,6 +123,9 @@ function isCurrent(name: string): boolean {
             <p>{{ errorMessage }}</p>
             <AppButton class="mt-3" variant="quiet" @click="store.retry()">{{ fa.retry }}</AppButton>
           </div>
+          <div v-else-if="catalog.actionError" role="alert" class="mb-4 rounded-2xl border border-line bg-danger-soft px-4 py-3 text-sm">
+            {{ errorText(catalog.actionError) }}
+          </div>
           <RouterView />
         </main>
       </div>
@@ -115,5 +161,33 @@ function isCurrent(name: string): boolean {
         </li>
       </ul>
     </nav>
+    <button
+      v-if="showFab"
+      type="button"
+      class="fixed end-4 z-20 grid size-14 place-items-center rounded-full bg-accent text-accent-ink shadow-[var(--shadow)] lg:hidden"
+      :style="{ bottom: 'calc(5.25rem + env(safe-area-inset-bottom))' }"
+      :aria-label="fa.task.new"
+      @click="catalog.openCreate(createPreset())"
+    >
+      <Plus :size="24" :stroke-width="1.75" aria-hidden="true" />
+    </button>
+    <div
+      v-if="catalog.undoEntry"
+      role="status"
+      class="fixed inset-x-4 z-30 flex items-center justify-between gap-3 rounded-2xl border border-line bg-surface px-4 py-3 text-sm shadow-[var(--shadow)] lg:inset-x-auto lg:end-6 lg:w-96"
+      :style="{ bottom: 'calc(5.25rem + env(safe-area-inset-bottom))' }"
+    >
+      <p>{{ catalog.undoEntry.message }}</p>
+      <button type="button" class="min-h-11 shrink-0 rounded-xl px-3 font-medium text-accent" @click="catalog.undo()">{{ fa.task.undo }}</button>
+    </div>
+    <p
+      v-else-if="catalog.notice"
+      role="status"
+      class="fixed inset-x-4 z-30 rounded-2xl border border-line bg-surface px-4 py-3 text-sm shadow-[var(--shadow)] lg:inset-x-auto lg:end-6 lg:w-80"
+      :style="{ bottom: 'calc(5.25rem + env(safe-area-inset-bottom))' }"
+    >
+      {{ catalog.notice }}
+    </p>
+    <TaskSheet />
   </div>
 </template>
