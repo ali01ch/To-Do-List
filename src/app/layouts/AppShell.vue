@@ -6,6 +6,8 @@ import { isMoreSection, libraryNav, moreNav, primaryNav } from '@/app/navigation
 import AppButton from '@/components/AppButton.vue'
 import BrandMark from '@/components/BrandMark.vue'
 import ConfirmDialog from '@/components/ConfirmDialog.vue'
+import InstallBanner from '@/components/InstallBanner.vue'
+import PwaUpdateBanner from '@/components/PwaUpdateBanner.vue'
 import TaskSheet from '@/components/TaskSheet.vue'
 import { errorText, fa } from '@/locales/fa'
 import { useAppStore } from '@/stores/appStore'
@@ -191,6 +193,8 @@ onUnmounted(() => window.removeEventListener('keydown', onKeydown))
       {{ catalog.notice }}
     </p>
     <TaskSheet />
+    <InstallBanner />
+    <PwaUpdateBanner />
     <ConfirmDialog
       :open="catalog.deleteDialog !== null"
       :title="catalog.deleteDialog?.title ?? ''"

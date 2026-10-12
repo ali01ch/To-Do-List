@@ -5,6 +5,7 @@ import { fa } from '@/locales/fa'
 import { formatDueWithState } from '@/services/duePhrase'
 import { todayDueOn } from '@/utils/dates'
 import { toPersianDigits } from '@/utils/digits'
+import { formatWeekdayShorts } from '@/utils/weekdays'
 
 defineProps<{
   task: Task
@@ -56,6 +57,13 @@ const today = todayDueOn()
         <span v-if="formatDueWithState(task.dueOn, today)" :class="task.dueOn && task.dueOn < today && !task.completedAt ? 'text-overdue' : ''">
           {{ formatDueWithState(task.dueOn, today) }}
           <span v-if="task.dueTime"> {{ toPersianDigits(task.dueTime) }}</span>
+        </span>
+        <span
+          v-if="task.recurrence?.frequency === 'weekly' && task.recurrence.weekdays?.length"
+          class="rounded-md bg-accent-soft px-1.5 py-0.5 text-accent"
+        >
+          {{ fa.task.routine }}
+          {{ formatWeekdayShorts(task.recurrence.weekdays) }}
         </span>
         <span v-if="list">{{ list.name }}</span>
         <span v-for="tag in tags" :key="tag">#{{ tag }}</span>

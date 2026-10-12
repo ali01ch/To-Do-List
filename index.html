@@ -3,9 +3,15 @@
   <head>
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="icon" type="image/png" sizes="192x192" href="/icons/icon-192.png" />
+    <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-    <meta name="theme-color" content="#f3f1eb" />
+    <meta name="theme-color" content="#0e5f58" />
     <meta name="description" content="روزنو؛ مدیریت کار روی همین دستگاه." />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-title" content="روزنو" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
     <title>روزنو</title>
     <script>
       try {
@@ -17,7 +23,8 @@
         if (dark) document.documentElement.classList.add('dark')
         document.documentElement.style.colorScheme = dark ? 'dark' : 'light'
         var themeMeta = document.querySelector('meta[name="theme-color"]')
-        if (themeMeta) themeMeta.setAttribute('content', color)
+        if (themeMeta) themeMeta.setAttribute('content', dark ? '#121311' : '#0e5f58')
+        void color
       } catch (error) {
         /* Appearance falls back to the light theme if storage is blocked. */
       }

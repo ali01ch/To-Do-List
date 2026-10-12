@@ -4,6 +4,7 @@ import { toDataError, type DataErrorCode } from '@/domain/errors'
 import type { FocusSession, NewTask, NewTaskList, Tag, Task, TaskList, TaskPatch, TaskTag } from '@/domain/types'
 import { fa } from '@/locales/fa'
 import { focusRepository, listRepository, tagRepository, taskRepository } from '@/repositories/container'
+import { nextWeeklyDueOn } from '@/services/recurrence'
 import { nowIso } from '@/utils/dates'
 import { toPersianDigits } from '@/utils/digits'
 
@@ -190,14 +191,41 @@ export const useCatalogStore = defineStore('catalog', () => {
     }
   }
 
+  async function spawnNextOccurrence(source: Task): Promise<void> {
+    if (!source.recurrence || !source.dueOn || source.recurrence.frequency !== 'weekly') return
+    const nextDue = nextWeeklyDueOn(source.dueOn, source.recurrence)
+    if (!nextDue) return
+    const next = await taskRepository.create({
+      title: source.title,
+      description: source.description,
+      notes: source.notes,
+      dueOn: nextDue,
+      dueTime: source.dueTime,
+      priority: source.priority,
+      listId: source.listId,
+      recurrence: {
+        ...source.recurrence,
+        generatedCount: source.recurrence.generatedCount + 1,
+      },
+    })
+    const sourceTags = tagsByTask.value.get(source.id) ?? []
+    if (sourceTags.length > 0) {
+      await taskRepository.setTags(next.id, sourceTags)
+      links.value = links.value.concat(sourceTags.map((tagId) => ({ taskId: next.id, tagId })))
+    }
+    replaceTask(next)
+  }
+
   async function toggleComplete(id: string): Promise<void> {
     const task = tasks.value.find((item) => item.id === id)
     if (!task) return
     const previous = task.completedAt
+    const shouldSpawn = !previous && task.recurrence !== null
     task.completedAt = previous ? null : nowIso()
     try {
       const saved = previous ? await taskRepository.uncomplete(id) : await taskRepository.complete(id)
       replaceTask(saved)
+      if (shouldSpawn) await spawnNextOccurrence(saved)
     } catch (error) {
       task.completedAt = previous
       actionError.value = toDataError(error).code

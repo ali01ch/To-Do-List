@@ -1,13 +1,15 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
-import type { Priority } from '@/domain/types'
+import type { Priority, RecurrenceRule } from '@/domain/types'
 import { PRIORITIES } from '@/domain/types'
+import AppSheet from '@/components/AppSheet.vue'
 import { fa } from '@/locales/fa'
+import { buildWeeklyRecurrence, firstMatchingDueOn } from '@/services/recurrence'
 import { useCatalogStore } from '@/stores/catalogStore'
-import { formatJalaliDate } from '@/utils/dates'
+import { formatJalaliDate, todayDueOn } from '@/utils/dates'
 import { toPersianDigits } from '@/utils/digits'
 import { formatJalaliNumeric, parseJalaliInput } from '@/utils/jalali'
-import AppSheet from '@/components/AppSheet.vue'
+import { WEEKDAY_JS_ORDER, formatWeekdayLabels, weekdayLabel, weekdayShortLabel } from '@/utils/weekdays'
 
 const catalog = useCatalogStore()
 const title = ref('')
@@ -19,6 +21,7 @@ const priority = ref<Priority>('none')
 const listId = ref('')
 const tagIds = ref<string[]>([])
 const tagName = ref('')
+const weekdays = ref<number[]>([])
 const formError = ref('')
 const pending = ref(false)
 
@@ -43,6 +46,7 @@ watch(
       priority.value = 'none'
       listId.value = editor.listId ?? ''
       tagIds.value = []
+      weekdays.value = []
       return
     }
     const task = catalog.tasks.find((item) => item.id === editor.taskId)
@@ -55,12 +59,22 @@ watch(
     priority.value = task.priority
     listId.value = task.listId ?? ''
     tagIds.value = [...(catalog.tagsByTask.get(task.id) ?? [])]
+    weekdays.value =
+      task.recurrence?.frequency === 'weekly' && task.recurrence.weekdays
+        ? [...task.recurrence.weekdays]
+        : []
   },
   { immediate: true },
 )
 
 function toggleTag(id: string): void {
   tagIds.value = tagIds.value.includes(id) ? tagIds.value.filter((tagId) => tagId !== id) : [...tagIds.value, id]
+}
+
+function toggleWeekday(day: number): void {
+  weekdays.value = weekdays.value.includes(day)
+    ? weekdays.value.filter((item) => item !== day)
+    : [...weekdays.value, day]
 }
 
 async function addTag(): Promise<void> {
@@ -85,6 +99,13 @@ function readDue(): { dueOn: string | null; dueTime: string | null } | undefined
   return { dueOn, dueTime: dueTime.value || null }
 }
 
+function readRecurrence(dueOn: string | null): { dueOn: string | null; recurrence: RecurrenceRule | null } {
+  if (weekdays.value.length === 0) return { dueOn, recurrence: null }
+  const recurrence = buildWeeklyRecurrence(weekdays.value)
+  if (dueOn) return { dueOn: firstMatchingDueOn(dueOn, weekdays.value), recurrence }
+  return { dueOn: firstMatchingDueOn(todayDueOn(), weekdays.value), recurrence }
+}
+
 async function save(): Promise<void> {
   if (pending.value) return
   const due = readDue()
@@ -93,41 +114,29 @@ async function save(): Promise<void> {
     formError.value = fa.errors.TITLE_REQUIRED
     return
   }
+  const schedule = readRecurrence(due.dueOn)
   pending.value = true
   formError.value = ''
   try {
     const editor = catalog.editor
     if (!editor) return
+    const payload = {
+      title: title.value,
+      description: description.value,
+      notes: notes.value,
+      dueOn: schedule.dueOn,
+      dueTime: schedule.dueOn ? due.dueTime : null,
+      priority: priority.value,
+      listId: listId.value || null,
+      recurrence: schedule.recurrence,
+    }
     if (editor.mode === 'create') {
-      const task = await catalog.createTask(
-        {
-          title: title.value,
-          description: description.value,
-          notes: notes.value,
-          dueOn: due.dueOn,
-          dueTime: due.dueTime,
-          priority: priority.value,
-          listId: listId.value || null,
-        },
-        tagIds.value,
-      )
+      const task = await catalog.createTask(payload, tagIds.value)
       if (task) catalog.closeEditor()
       else if (catalog.actionError) formError.value = fa.errors[catalog.actionError]
       return
     }
-    await catalog.updateTask(
-      editor.taskId,
-      {
-        title: title.value,
-        description: description.value,
-        notes: notes.value,
-        dueOn: due.dueOn,
-        dueTime: due.dueTime,
-        priority: priority.value,
-        listId: listId.value || null,
-      },
-      tagIds.value,
-    )
+    await catalog.updateTask(editor.taskId, payload, tagIds.value)
     if (!catalog.actionError) catalog.closeEditor()
     else formError.value = fa.errors[catalog.actionError]
   } finally {
@@ -160,6 +169,29 @@ async function save(): Promise<void> {
           <input id="task-time" v-model="dueTime" type="time" dir="ltr" class="mt-1 min-h-11 w-full rounded-xl border border-line bg-canvas px-3 text-sm" />
         </div>
       </div>
+
+      <fieldset class="mt-4">
+        <legend class="text-sm font-medium">{{ fa.task.weekdays }}</legend>
+        <p class="mt-1 text-xs leading-6 text-muted">{{ fa.task.weekdaysHint }}</p>
+        <div class="mt-3 grid grid-cols-7 gap-1.5">
+          <button
+            v-for="day in WEEKDAY_JS_ORDER"
+            :key="day"
+            type="button"
+            class="flex min-h-11 flex-col items-center justify-center rounded-xl border border-line px-1 text-[0.7rem] leading-4 transition-colors"
+            :class="weekdays.includes(day) ? 'border-accent bg-accent-soft text-accent' : 'bg-canvas text-muted'"
+            :aria-pressed="weekdays.includes(day)"
+            :aria-label="weekdayLabel(day)"
+            @click="toggleWeekday(day)"
+          >
+            <span class="text-sm font-medium">{{ weekdayShortLabel(day) }}</span>
+          </button>
+        </div>
+        <p v-if="weekdays.length" class="mt-2 text-xs text-muted">
+          {{ fa.task.routine }}:
+          {{ formatWeekdayLabels(weekdays) }}
+        </p>
+      </fieldset>
 
       <fieldset class="mt-3">
         <legend class="text-sm">{{ fa.task.priority }}</legend>

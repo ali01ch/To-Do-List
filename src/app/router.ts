@@ -26,7 +26,7 @@ function page(path: string, name: string, component: object, copy: { title: stri
 }
 
 export const router = createRouter({
-  history: createWebHistory(),
+  history: createWebHistory(import.meta.env.BASE_URL),
   scrollBehavior() {
     return { top: 0 }
   },
