@@ -40,7 +40,7 @@ function listOf(task: Task) {
         :can-move-down="reorder && index < tasks.length - 1"
         @toggle="catalog.toggleComplete(task.id)"
         @edit="catalog.openEdit(task.id)"
-        @remove="catalog.removeTask(task.id)"
+        @remove="catalog.requestRemoveTask(task.id)"
         @move="catalog.moveTask(task.id, $event, tasks.map((item) => item.id))"
         @select="emit('select', task.id)"
       />

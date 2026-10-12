@@ -209,7 +209,7 @@ async function save(): Promise<void> {
         <button v-if="catalog.editor.mode === 'edit'" type="button" class="min-h-11 rounded-xl px-3 text-sm text-muted" @click="catalog.duplicateTask(catalog.editor.taskId)">
           {{ fa.task.copy }}
         </button>
-        <button v-if="catalog.editor.mode === 'edit'" type="button" class="min-h-11 rounded-xl px-3 text-sm text-danger" @click="catalog.removeTask(catalog.editor.taskId)">
+        <button v-if="catalog.editor.mode === 'edit'" type="button" class="min-h-11 rounded-xl px-3 text-sm text-danger" @click="catalog.requestRemoveTask(catalog.editor.taskId)">
           {{ fa.task.remove }}
         </button>
       </div>

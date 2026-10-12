@@ -2,8 +2,10 @@ import { defineStore } from 'pinia'
 import { computed, ref } from 'vue'
 import { toDataError, type DataErrorCode } from '@/domain/errors'
 import type { FocusSession, NewTask, NewTaskList, Tag, Task, TaskList, TaskPatch, TaskTag } from '@/domain/types'
+import { fa } from '@/locales/fa'
 import { focusRepository, listRepository, tagRepository, taskRepository } from '@/repositories/container'
 import { nowIso } from '@/utils/dates'
+import { toPersianDigits } from '@/utils/digits'
 
 export interface CreatePreset {
   title?: string
@@ -12,6 +14,12 @@ export interface CreatePreset {
 }
 
 export type EditorState = { mode: 'create'; title: string; dueOn: string | null; listId: string | null } | { mode: 'edit'; taskId: string }
+
+export type PendingDelete =
+  | { kind: 'task'; id: string; label: string }
+  | { kind: 'tasks'; ids: string[]; count: number }
+  | { kind: 'list'; id: string; label: string }
+  | { kind: 'tag'; id: string; label: string }
 
 interface UndoEntry {
   message: string
@@ -29,9 +37,39 @@ export const useCatalogStore = defineStore('catalog', () => {
   const editor = ref<EditorState | null>(null)
   const undoEntry = ref<UndoEntry | null>(null)
   const notice = ref<string | null>(null)
+  const pendingDelete = ref<PendingDelete | null>(null)
+  const deleteBusy = ref(false)
   let createLock = false
   let undoTimer = 0
   let noticeTimer = 0
+  let resolvePendingDelete: ((confirmed: boolean) => void) | null = null
+
+  const deleteDialog = computed(() => {
+    const pending = pendingDelete.value
+    if (!pending) return null
+    if (pending.kind === 'task') {
+      return {
+        title: fa.task.confirmTaskNamed.replace('{title}', pending.label),
+        body: fa.task.confirmTaskBody,
+      }
+    }
+    if (pending.kind === 'tasks') {
+      return {
+        title: fa.task.confirmTasks,
+        body: `${toPersianDigits(pending.count)} کار انتخاب شده است.\n${fa.task.confirmTasksBody}`,
+      }
+    }
+    if (pending.kind === 'list') {
+      return {
+        title: fa.task.confirmListNamed.replace('{title}', pending.label),
+        body: fa.task.confirmListBody,
+      }
+    }
+    return {
+      title: fa.task.confirmTagNamed.replace('{title}', pending.label),
+      body: fa.task.confirmTagBody,
+    }
+  })
 
   const tagsByTask = computed(() => {
     const map = new Map<string, string[]>()
@@ -164,6 +202,68 @@ export const useCatalogStore = defineStore('catalog', () => {
       task.completedAt = previous
       actionError.value = toDataError(error).code
     }
+  }
+
+  function askDelete(pending: PendingDelete): Promise<boolean> {
+    if (resolvePendingDelete) resolvePendingDelete(false)
+    pendingDelete.value = pending
+    return new Promise((resolve) => {
+      resolvePendingDelete = resolve
+    })
+  }
+
+  function cancelPendingDelete(): void {
+    if (deleteBusy.value) return
+    pendingDelete.value = null
+    resolvePendingDelete?.(false)
+    resolvePendingDelete = null
+  }
+
+  async function confirmPendingDelete(): Promise<void> {
+    const pending = pendingDelete.value
+    const resolve = resolvePendingDelete
+    if (!pending || deleteBusy.value) {
+      if (!pending) {
+        resolvePendingDelete = null
+        resolve?.(false)
+      }
+      return
+    }
+    deleteBusy.value = true
+    try {
+      if (pending.kind === 'task') await removeTask(pending.id)
+      else if (pending.kind === 'tasks') await removeTasks(pending.ids)
+      else if (pending.kind === 'list') await removeList(pending.id)
+      else await removeTag(pending.id)
+      pendingDelete.value = null
+      resolvePendingDelete = null
+      resolve?.(actionError.value === null)
+    } finally {
+      deleteBusy.value = false
+    }
+  }
+
+  async function requestRemoveTask(id: string): Promise<boolean> {
+    const task = tasks.value.find((item) => item.id === id)
+    if (!task) return false
+    return askDelete({ kind: 'task', id, label: task.title })
+  }
+
+  async function requestRemoveTasks(ids: string[]): Promise<boolean> {
+    if (ids.length === 0) return false
+    return askDelete({ kind: 'tasks', ids: [...ids], count: ids.length })
+  }
+
+  async function requestRemoveList(id: string): Promise<boolean> {
+    const list = lists.value.find((item) => item.id === id)
+    if (!list) return false
+    return askDelete({ kind: 'list', id, label: list.name })
+  }
+
+  async function requestRemoveTag(id: string): Promise<boolean> {
+    const tag = tags.value.find((item) => item.id === id)
+    if (!tag) return false
+    return askDelete({ kind: 'tag', id, label: tag.name })
   }
 
   async function removeTask(id: string): Promise<void> {
@@ -341,6 +441,9 @@ export const useCatalogStore = defineStore('catalog', () => {
     editor,
     undoEntry,
     notice,
+    pendingDelete,
+    deleteBusy,
+    deleteDialog,
     tagsByTask,
     activeLists,
     load,
@@ -350,17 +453,19 @@ export const useCatalogStore = defineStore('catalog', () => {
     createTask,
     updateTask,
     toggleComplete,
-    removeTask,
-    removeTasks,
+    requestRemoveTask,
+    requestRemoveTasks,
+    requestRemoveList,
+    requestRemoveTag,
+    cancelPendingDelete,
+    confirmPendingDelete,
     completeTasks,
     duplicateTask,
     moveTask,
     createList,
     updateList,
     setListArchived,
-    removeList,
     createTag,
-    removeTag,
     rememberSession,
     undo,
     showNotice,

@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
-import ConfirmDialog from '@/components/ConfirmDialog.vue'
 import EmptyState from '@/components/EmptyState.vue'
 import PageHeader from '@/components/PageHeader.vue'
 import QuickAdd from '@/components/QuickAdd.vue'
@@ -16,7 +15,6 @@ const catalog = useCatalogStore()
 const view = useViewStore()
 const selecting = ref(false)
 const selected = ref<string[]>([])
-const confirmDelete = ref(false)
 
 const visible = computed(() =>
   sortTasks(
@@ -42,9 +40,10 @@ function toggle(id: string): void {
 }
 
 async function removeSelected(): Promise<void> {
-  await catalog.removeTasks(selected.value)
+  const ids = [...selected.value]
+  const confirmed = await catalog.requestRemoveTasks(ids)
+  if (!confirmed) return
   selected.value = []
-  confirmDelete.value = false
   selecting.value = false
 }
 
@@ -107,20 +106,12 @@ async function completeSelected(): Promise<void> {
         <button v-if="selecting" type="button" class="min-h-11 rounded-xl bg-surface-muted px-3 text-sm" :disabled="selected.length === 0" @click="completeSelected">
           {{ fa.task.completeSelected }}
         </button>
-        <button v-if="selecting" type="button" class="min-h-11 rounded-xl bg-danger-soft px-3 text-sm" :disabled="selected.length === 0" @click="confirmDelete = true">
+        <button v-if="selecting" type="button" class="min-h-11 rounded-xl bg-danger-soft px-3 text-sm text-danger" :disabled="selected.length === 0" @click="removeSelected">
           {{ fa.task.deleteSelected }}
         </button>
       </div>
       <EmptyState v-if="visible.length === 0" :title="fa.empty.tasksTitle" :description="fa.empty.tasksBody" />
       <TaskStack v-else :tasks="visible" :reorder="view.sort === 'manual'" :selectable="selecting" :selected-ids="selected" @select="toggle" />
-      <ConfirmDialog
-        :open="confirmDelete"
-        :title="fa.task.confirmDelete"
-        :body="fa.task.confirmDeleteBody"
-        :confirm-label="fa.task.remove"
-        @cancel="confirmDelete = false"
-        @confirm="removeSelected"
-      />
     </template>
   </section>
 </template>

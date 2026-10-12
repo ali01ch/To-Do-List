@@ -5,6 +5,7 @@ import { RouterLink, RouterView, useRoute } from 'vue-router'
 import { isMoreSection, libraryNav, moreNav, primaryNav } from '@/app/navigation'
 import AppButton from '@/components/AppButton.vue'
 import BrandMark from '@/components/BrandMark.vue'
+import ConfirmDialog from '@/components/ConfirmDialog.vue'
 import TaskSheet from '@/components/TaskSheet.vue'
 import { errorText, fa } from '@/locales/fa'
 import { useAppStore } from '@/stores/appStore'
@@ -22,6 +23,7 @@ const showFab = computed(
   () =>
     ['today', 'upcoming', 'inbox', 'tasks', 'calendar', 'list'].includes(String(route.name)) &&
     catalog.editor === null &&
+    !catalog.pendingDelete &&
     !catalog.undoEntry &&
     !catalog.notice,
 )
@@ -189,5 +191,14 @@ onUnmounted(() => window.removeEventListener('keydown', onKeydown))
       {{ catalog.notice }}
     </p>
     <TaskSheet />
+    <ConfirmDialog
+      :open="catalog.deleteDialog !== null"
+      :title="catalog.deleteDialog?.title ?? ''"
+      :body="catalog.deleteDialog?.body ?? ''"
+      :confirm-label="fa.task.remove"
+      :busy="catalog.deleteBusy"
+      @cancel="catalog.cancelPendingDelete()"
+      @confirm="catalog.confirmPendingDelete()"
+    />
   </div>
 </template>
