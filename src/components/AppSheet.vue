@@ -31,8 +31,7 @@ function onKeydown(event: KeyboardEvent): void {
           role="dialog"
           aria-modal="true"
           :aria-label="title"
-          class="app-sheet-panel relative z-10 max-h-[min(92dvh,44rem)] w-full overflow-y-auto rounded-t-3xl border border-line bg-surface p-4 shadow-[var(--shadow)] lg:w-[32rem] lg:rounded-3xl"
-          :style="{ paddingBottom: 'max(1rem, env(safe-area-inset-bottom))' }"
+          class="app-sheet-panel relative z-10 flex max-h-[min(92dvh,44rem)] w-full flex-col overflow-hidden rounded-t-3xl border border-line bg-surface shadow-[var(--shadow)] lg:w-[32rem] lg:rounded-3xl"
         >
           <slot />
         </div>
