@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { Plus } from '@lucide/vue'
-import { computed, onMounted, onUnmounted, watch } from 'vue'
+import { Plus, RefreshCw } from '@lucide/vue'
+import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
 import { RouterLink, RouterView, useRoute } from 'vue-router'
 import { isMoreSection, libraryNav, moreNav, primaryNav } from '@/app/navigation'
 import AppButton from '@/components/AppButton.vue'
@@ -10,6 +10,7 @@ import ConfirmDialog from '@/components/ConfirmDialog.vue'
 import InstallBanner from '@/components/InstallBanner.vue'
 import PwaUpdateBanner from '@/components/PwaUpdateBanner.vue'
 import TaskSheet from '@/components/TaskSheet.vue'
+import { usePullToRefresh } from '@/composables/usePullToRefresh'
 import { errorText, fa } from '@/locales/fa'
 import { useAppStore } from '@/stores/appStore'
 import {
@@ -25,6 +26,7 @@ const route = useRoute()
 const store = useAppStore()
 const catalog = useCatalogStore()
 const view = useViewStore()
+const mainEl = ref<HTMLElement | null>(null)
 const moreActive = computed(() => isMoreSection(route.name))
 const errorMessage = computed(() => (store.dbError ? errorText(store.dbError) : fa.errors.UNKNOWN))
 const showFab = computed(
@@ -35,6 +37,13 @@ const showFab = computed(
     !catalog.undoEntry &&
     !catalog.notice,
 )
+
+async function refreshApp(): Promise<void> {
+  await catalog.load()
+  catalog.showNotice(fa.refreshed)
+}
+
+const { pullDistance, refreshing } = usePullToRefresh(mainEl, refreshApp)
 
 watch(
   () => store.dbStatus,
@@ -140,8 +149,24 @@ onUnmounted(() => window.removeEventListener('keydown', onKeydown))
         </header>
         <main
           id="main"
+          ref="mainEl"
           class="mx-auto min-h-0 w-full max-w-[40rem] flex-1 overflow-y-auto overscroll-y-contain px-4 pt-6 pb-6 lg:overflow-visible lg:px-8 lg:pt-10 lg:pb-16"
         >
+          <div
+            class="flex flex-col items-center justify-end overflow-hidden text-xs text-muted transition-[height] duration-150 ease-out lg:hidden"
+            :style="{ height: `${pullDistance}px` }"
+            aria-live="polite"
+          >
+            <div v-if="pullDistance > 8 || refreshing" class="flex items-center gap-2 pb-2">
+              <RefreshCw
+                class="size-4"
+                :class="refreshing || pullDistance >= 64 ? 'animate-spin text-accent' : ''"
+                :stroke-width="1.75"
+                aria-hidden="true"
+              />
+              <span>{{ refreshing ? fa.refreshing : fa.pullToRefresh }}</span>
+            </div>
+          </div>
           <div
             v-if="store.dbStatus === 'error'"
             role="alert"

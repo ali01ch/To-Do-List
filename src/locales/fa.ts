@@ -5,6 +5,9 @@ export const fa = {
   appTagline: 'کارهای همین دستگاه',
   skipToContent: 'رفتن به محتوا',
   retry: 'تلاش دوباره',
+  pullToRefresh: 'برای بروزرسانی رها کنید',
+  refreshing: 'در حال بروزرسانی…',
+  refreshed: 'بروزرسانی شد',
   nav: {
     work: 'کارها',
     today: 'امروز',
