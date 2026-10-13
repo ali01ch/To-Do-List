@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ArrowDown, ArrowUp, Trash2 } from '@lucide/vue'
+import { ArrowDown, ArrowUp, Pencil, Trash2 } from '@lucide/vue'
 import type { Task, TaskList } from '@/domain/types'
 import { fa } from '@/locales/fa'
 import { formatDueWithState } from '@/services/duePhrase'
@@ -29,8 +29,12 @@ const today = todayDueOn()
 </script>
 
 <template>
-  <article class="flex items-start gap-2 rounded-2xl border border-line bg-surface px-3 py-3" :class="task.completedAt ? 'opacity-70' : ''">
-    <label v-if="selectable" class="mt-1 flex size-11 shrink-0 items-center justify-center">
+  <article
+    class="flex cursor-pointer items-start gap-2 rounded-2xl border border-line bg-surface px-3 py-3"
+    :class="task.completedAt ? 'opacity-70' : ''"
+    @click="emit('toggle')"
+  >
+    <label v-if="selectable" class="mt-1 flex size-11 shrink-0 items-center justify-center" @click.stop>
       <input
         type="checkbox"
         class="size-5 accent-accent"
@@ -46,11 +50,11 @@ const today = todayDueOn()
       :class="task.completedAt ? 'bg-accent text-accent-ink' : 'bg-surface'"
       :aria-checked="task.completedAt ? 'true' : 'false'"
       :aria-label="task.completedAt ? fa.task.uncomplete : fa.task.complete"
-      @click="emit('toggle')"
+      @click.stop="emit('toggle')"
     >
       <span v-if="task.completedAt" aria-hidden="true">✓</span>
     </button>
-    <button type="button" class="min-w-0 flex-1 py-1 text-start" @click="emit('edit')">
+    <div class="min-w-0 flex-1 py-1 text-start">
       <span class="block truncate text-sm font-medium" :class="task.completedAt ? 'line-through' : ''">{{ task.title }}</span>
       <span class="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-muted">
         <span v-if="task.priority !== 'none'">{{ fa.priority[task.priority] }}</span>
@@ -68,8 +72,11 @@ const today = todayDueOn()
         <span v-if="list">{{ list.name }}</span>
         <span v-for="tag in tags" :key="tag">#{{ tag }}</span>
       </span>
-    </button>
-    <div class="flex shrink-0">
+    </div>
+    <div class="flex shrink-0" @click.stop>
+      <button type="button" class="grid size-11 place-items-center text-muted" :aria-label="fa.task.edit" @click="emit('edit')">
+        <Pencil :size="18" :stroke-width="1.75" aria-hidden="true" />
+      </button>
       <button
         v-if="canMoveUp"
         type="button"
