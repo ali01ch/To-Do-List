@@ -117,7 +117,7 @@ const filterSummary = computed(() => {
     <PageHeader :title="fa.sections.work.title" :description="fa.sections.work.description" />
     <p v-if="catalog.status === 'loading'" class="mt-6 text-sm text-muted">{{ fa.empty.loading }}</p>
     <template v-else>
-      <QuickAdd :preset="addPreset" />
+      <QuickAdd :preset="addPreset" :show-due-choices="false" />
 
       <div class="mt-5 overflow-hidden rounded-2xl border border-line bg-surface">
         <button
