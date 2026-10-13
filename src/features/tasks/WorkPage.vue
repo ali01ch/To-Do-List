@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { ChevronDown } from '@lucide/vue'
 import { computed, ref } from 'vue'
 import type { Priority } from '@/domain/types'
 import { PRIORITIES } from '@/domain/types'
@@ -17,6 +18,7 @@ type WorkScope = 'all' | 'today' | 'upcoming' | 'overdue' | 'undated'
 type UpcomingHorizon = 'all' | 'week' | 'month'
 
 const catalog = useCatalogStore()
+const filtersOpen = ref(false)
 const scope = ref<WorkScope>('all')
 const priority = ref<Priority | 'any'>('any')
 const listId = ref<string | 'any'>('any')
@@ -93,6 +95,21 @@ const horizons: { id: UpcomingHorizon; label: string }[] = [
   { id: 'week', label: fa.task.horizonWeek },
   { id: 'month', label: fa.task.horizonMonth },
 ]
+
+const activeFilterCount = computed(() => {
+  let count = 0
+  if (scope.value !== 'all') count += 1
+  if (priority.value !== 'any') count += 1
+  if (listId.value !== 'any') count += 1
+  if (showUpcoming.value && horizon.value !== 'all') count += 1
+  if (showToday.value && !showCompletedToday.value) count += 1
+  return count
+})
+
+const filterSummary = computed(() => {
+  if (activeFilterCount.value === 0) return fa.task.filtersShow
+  return `${toPersianDigits(activeFilterCount.value)} ${fa.task.filtersActive}`
+})
 </script>
 
 <template>
@@ -102,66 +119,91 @@ const horizons: { id: UpcomingHorizon; label: string }[] = [
     <template v-else>
       <QuickAdd :preset="addPreset" />
 
-      <div class="mt-5 space-y-4 rounded-2xl border border-line bg-surface p-3 sm:p-4">
-        <div>
-          <p id="work-scope-label" class="text-sm font-medium text-ink">{{ fa.task.workScope }}</p>
-          <p class="mt-0.5 text-xs text-muted">{{ fa.task.workScopeHint }}</p>
-          <div class="mt-2 flex flex-wrap gap-2" role="group" aria-labelledby="work-scope-label">
-            <button
-              v-for="item in scopes"
-              :key="item.id"
-              type="button"
-              class="min-h-11 rounded-full border border-line px-3 text-sm transition-colors"
-              :class="scope === item.id ? 'border-accent bg-accent-soft text-accent' : 'bg-canvas text-muted'"
-              :aria-pressed="scope === item.id"
-              @click="scope = item.id"
-            >
-              {{ item.label }}
-            </button>
-          </div>
-        </div>
+      <div class="mt-5 overflow-hidden rounded-2xl border border-line bg-surface">
+        <button
+          type="button"
+          class="flex min-h-12 w-full items-center justify-between gap-3 px-3 py-3 text-start sm:px-4"
+          :aria-expanded="filtersOpen"
+          aria-controls="work-filters-panel"
+          @click="filtersOpen = !filtersOpen"
+        >
+          <span class="min-w-0">
+            <span class="block text-sm font-medium text-ink">{{ fa.task.filters }}</span>
+            <span class="mt-0.5 block text-xs text-muted">{{ filterSummary }}</span>
+          </span>
+          <ChevronDown
+            class="size-5 shrink-0 text-muted transition-transform duration-200"
+            :class="filtersOpen ? 'rotate-180' : ''"
+            :stroke-width="1.75"
+            aria-hidden="true"
+          />
+        </button>
 
-        <div class="grid gap-3 sm:grid-cols-2">
+        <div
+          v-show="filtersOpen"
+          id="work-filters-panel"
+          class="space-y-4 border-t border-line px-3 py-4 sm:px-4"
+        >
           <div>
-            <label class="block text-sm font-medium text-ink" for="work-priority">{{ fa.task.filterPriority }}</label>
-            <select id="work-priority" v-model="priority" class="mt-2 min-h-11 w-full rounded-xl border border-line bg-canvas px-3 text-sm">
-              <option value="any">{{ fa.task.anyPriority }}</option>
-              <option v-for="item in PRIORITIES" :key="item" :value="item">{{ fa.priority[item] }}</option>
-            </select>
+            <p id="work-scope-label" class="text-sm font-medium text-ink">{{ fa.task.workScope }}</p>
+            <p class="mt-0.5 text-xs text-muted">{{ fa.task.workScopeHint }}</p>
+            <div class="mt-2 flex flex-wrap gap-2" role="group" aria-labelledby="work-scope-label">
+              <button
+                v-for="item in scopes"
+                :key="item.id"
+                type="button"
+                class="min-h-11 rounded-full border border-line px-3 text-sm transition-colors"
+                :class="scope === item.id ? 'border-accent bg-accent-soft text-accent' : 'bg-canvas text-muted'"
+                :aria-pressed="scope === item.id"
+                @click="scope = item.id"
+              >
+                {{ item.label }}
+              </button>
+            </div>
           </div>
-          <div>
-            <label class="block text-sm font-medium text-ink" for="work-list">{{ fa.task.filterList }}</label>
-            <select id="work-list" v-model="listId" class="mt-2 min-h-11 w-full rounded-xl border border-line bg-canvas px-3 text-sm">
-              <option value="any">{{ fa.task.anyList }}</option>
-              <option v-for="list in catalog.activeLists" :key="list.id" :value="list.id">{{ list.name }}</option>
-            </select>
-          </div>
-        </div>
 
-        <div v-if="showUpcoming">
-          <p id="work-horizon-label" class="text-sm font-medium text-ink">{{ fa.task.horizon }}</p>
-          <p class="mt-0.5 text-xs text-muted">{{ fa.task.horizonHint }}</p>
-          <div class="mt-2 flex flex-wrap gap-2" role="group" aria-labelledby="work-horizon-label">
-            <button
-              v-for="item in horizons"
-              :key="item.id"
-              type="button"
-              class="min-h-11 rounded-full border border-line px-3 text-sm transition-colors"
-              :class="horizon === item.id ? 'border-accent bg-accent-soft text-accent' : 'bg-canvas text-muted'"
-              :aria-pressed="horizon === item.id"
-              @click="horizon = item.id"
-            >
-              {{ item.label }}
-            </button>
+          <div class="grid gap-3 sm:grid-cols-2">
+            <div>
+              <label class="block text-sm font-medium text-ink" for="work-priority">{{ fa.task.filterPriority }}</label>
+              <select id="work-priority" v-model="priority" class="mt-2 min-h-11 w-full rounded-xl border border-line bg-canvas px-3 text-sm">
+                <option value="any">{{ fa.task.anyPriority }}</option>
+                <option v-for="item in PRIORITIES" :key="item" :value="item">{{ fa.priority[item] }}</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-ink" for="work-list">{{ fa.task.filterList }}</label>
+              <select id="work-list" v-model="listId" class="mt-2 min-h-11 w-full rounded-xl border border-line bg-canvas px-3 text-sm">
+                <option value="any">{{ fa.task.anyList }}</option>
+                <option v-for="list in catalog.activeLists" :key="list.id" :value="list.id">{{ list.name }}</option>
+              </select>
+            </div>
           </div>
-        </div>
 
-        <div v-if="showToday">
-          <p class="text-sm font-medium text-ink">{{ fa.task.filterDoneToday }}</p>
-          <label class="mt-2 flex min-h-11 items-center gap-2 text-sm text-ink">
-            <input v-model="showCompletedToday" type="checkbox" class="size-4 accent-accent" />
-            {{ fa.task.showDoneToday }}
-          </label>
+          <div v-if="showUpcoming">
+            <p id="work-horizon-label" class="text-sm font-medium text-ink">{{ fa.task.horizon }}</p>
+            <p class="mt-0.5 text-xs text-muted">{{ fa.task.horizonHint }}</p>
+            <div class="mt-2 flex flex-wrap gap-2" role="group" aria-labelledby="work-horizon-label">
+              <button
+                v-for="item in horizons"
+                :key="item.id"
+                type="button"
+                class="min-h-11 rounded-full border border-line px-3 text-sm transition-colors"
+                :class="horizon === item.id ? 'border-accent bg-accent-soft text-accent' : 'bg-canvas text-muted'"
+                :aria-pressed="horizon === item.id"
+                @click="horizon = item.id"
+              >
+                {{ item.label }}
+              </button>
+            </div>
+          </div>
+
+          <div v-if="showToday">
+            <p class="text-sm font-medium text-ink">{{ fa.task.filterDoneToday }}</p>
+            <label class="mt-2 flex min-h-11 items-center gap-2 text-sm text-ink">
+              <input v-model="showCompletedToday" type="checkbox" class="size-4 accent-accent" />
+              {{ fa.task.showDoneToday }}
+            </label>
+          </div>
         </div>
       </div>
 
