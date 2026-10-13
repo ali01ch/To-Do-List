@@ -119,7 +119,6 @@ export const fa = {
     complete: 'انجام شد',
     uncomplete: 'بازگشت به کارها',
     remove: 'حذف',
-    copy: 'کپی',
     moveUp: 'انتقال به بالا',
     moveDown: 'انتقال به پایین',
     close: 'بستن',
