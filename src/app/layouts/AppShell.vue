@@ -50,7 +50,7 @@ function isCurrent(name: string): boolean {
 }
 
 function createPreset(): CreatePreset {
-  if (route.name === 'work') return { dueOn: todayDueOn() }
+  if (route.name === 'work') return { dueOn: null }
   if (route.name === 'inbox') return { dueOn: null }
   if (route.name === 'calendar') return { dueOn: view.calendarDueOn ?? todayDueOn() }
   if (route.name === 'list') return { listId: String(route.params.id) }

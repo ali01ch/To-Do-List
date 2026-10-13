@@ -8,12 +8,12 @@ import QuickAdd from '@/components/QuickAdd.vue'
 import TaskStack from '@/components/TaskStack.vue'
 import { fa } from '@/locales/fa'
 import { formatDuePhrase } from '@/services/duePhrase'
-import { groupByDueOn, todayBuckets, upcomingTasks } from '@/services/taskQuery'
+import { groupByDueOn, inboxTasks, todayBuckets, upcomingTasks } from '@/services/taskQuery'
 import { useCatalogStore } from '@/stores/catalogStore'
 import { addDays, todayDueOn } from '@/utils/dates'
 import { toPersianDigits } from '@/utils/digits'
 
-type WorkScope = 'all' | 'today' | 'upcoming' | 'overdue'
+type WorkScope = 'all' | 'today' | 'upcoming' | 'overdue' | 'undated'
 type UpcomingHorizon = 'all' | 'week' | 'month'
 
 const catalog = useCatalogStore()
@@ -40,6 +40,8 @@ const buckets = computed(() => {
   }
 })
 
+const undated = computed(() => inboxTasks(catalog.tasks).filter(matchesExtras))
+
 const upcomingGroups = computed(() => {
   let tasks = upcomingTasks(catalog.tasks, today.value).filter(matchesExtras)
   if (horizon.value === 'week') {
@@ -55,6 +57,7 @@ const upcomingGroups = computed(() => {
 const showOverdue = computed(() => scope.value === 'all' || scope.value === 'overdue' || scope.value === 'today')
 const showToday = computed(() => scope.value === 'all' || scope.value === 'today')
 const showUpcoming = computed(() => scope.value === 'all' || scope.value === 'upcoming')
+const showUndated = computed(() => scope.value === 'all' || scope.value === 'undated')
 
 const progress = computed(() => {
   const done = buckets.value.completedToday.length
@@ -67,12 +70,14 @@ const isEmpty = computed(() => {
   const todayCount = showToday.value ? buckets.value.today.length : 0
   const done = showToday.value && showCompletedToday.value ? buckets.value.completedToday.length : 0
   const upcoming = showUpcoming.value ? upcomingGroups.value.reduce((sum, group) => sum + group.tasks.length, 0) : 0
-  return overdue + todayCount + done + upcoming === 0
+  const free = showUndated.value ? undated.value.length : 0
+  return overdue + todayCount + done + upcoming + free === 0
 })
 
 const addPreset = computed(() => {
   if (scope.value === 'upcoming') return { dueOn: addDays(today.value, 1) }
-  return { dueOn: today.value }
+  if (scope.value === 'today' || scope.value === 'overdue') return { dueOn: today.value }
+  return { dueOn: null }
 })
 
 const scopes: { id: WorkScope; label: string }[] = [
@@ -80,6 +85,7 @@ const scopes: { id: WorkScope; label: string }[] = [
   { id: 'today', label: fa.nav.today },
   { id: 'upcoming', label: fa.nav.upcoming },
   { id: 'overdue', label: fa.task.overdue },
+  { id: 'undated', label: fa.task.noDate },
 ]
 
 const horizons: { id: UpcomingHorizon; label: string }[] = [
@@ -157,6 +163,11 @@ const horizons: { id: UpcomingHorizon; label: string }[] = [
 
       <EmptyState v-if="isEmpty" :title="fa.empty.workTitle" :description="fa.empty.workBody" />
       <template v-else>
+        <template v-if="showUndated && undated.length">
+          <h2 class="mt-6 text-sm font-medium text-muted">{{ fa.task.noDate }}</h2>
+          <TaskStack :tasks="undated" reorder />
+        </template>
+
         <template v-if="showOverdue && buckets.overdue.length">
           <h2 class="mt-6 text-sm font-medium text-overdue">{{ fa.task.overdue }}</h2>
           <TaskStack :tasks="buckets.overdue" reorder />

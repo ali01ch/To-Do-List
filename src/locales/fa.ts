@@ -102,6 +102,8 @@ export const fa = {
     due: 'تاریخ سررسید',
     duePlaceholder: '۱۴۰۵/۰۷/۱۹',
     clearDue: 'بدون تاریخ',
+    noDate: 'بدون تاریخ',
+    tomorrow: 'فردا',
     time: 'ساعت',
     weekdays: 'روزهای هفته',
     weekdaysHint: 'اگر روزی را انتخاب کنید، این کار به‌صورت روتین هفتگی در همان روزها تکرار می‌شود.',
