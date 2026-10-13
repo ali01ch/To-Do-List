@@ -27,6 +27,9 @@ interface UndoEntry {
   undo: () => Promise<void>
 }
 
+export const NOTICE_DURATION_MS = 2200
+export const UNDO_DURATION_MS = 3500
+
 export const useCatalogStore = defineStore('catalog', () => {
   const tasks = ref<Task[]>([])
   const lists = ref<TaskList[]>([])
@@ -91,19 +94,23 @@ export const useCatalogStore = defineStore('catalog', () => {
   }
 
   function showNotice(message: string): void {
+    undoEntry.value = null
+    window.clearTimeout(undoTimer)
     notice.value = message
     window.clearTimeout(noticeTimer)
     noticeTimer = window.setTimeout(() => {
       notice.value = null
-    }, 4000)
+    }, NOTICE_DURATION_MS)
   }
 
   function showUndo(entry: UndoEntry): void {
+    notice.value = null
+    window.clearTimeout(noticeTimer)
     undoEntry.value = entry
     window.clearTimeout(undoTimer)
     undoTimer = window.setTimeout(() => {
       undoEntry.value = null
-    }, 6000)
+    }, UNDO_DURATION_MS)
   }
 
   async function undo(): Promise<void> {

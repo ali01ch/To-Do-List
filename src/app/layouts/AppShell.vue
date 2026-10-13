@@ -5,13 +5,19 @@ import { RouterLink, RouterView, useRoute } from 'vue-router'
 import { isMoreSection, libraryNav, moreNav, primaryNav } from '@/app/navigation'
 import AppButton from '@/components/AppButton.vue'
 import BrandMark from '@/components/BrandMark.vue'
+import ActionToast from '@/components/ActionToast.vue'
 import ConfirmDialog from '@/components/ConfirmDialog.vue'
 import InstallBanner from '@/components/InstallBanner.vue'
 import PwaUpdateBanner from '@/components/PwaUpdateBanner.vue'
 import TaskSheet from '@/components/TaskSheet.vue'
 import { errorText, fa } from '@/locales/fa'
 import { useAppStore } from '@/stores/appStore'
-import { useCatalogStore, type CreatePreset } from '@/stores/catalogStore'
+import {
+  NOTICE_DURATION_MS,
+  UNDO_DURATION_MS,
+  useCatalogStore,
+  type CreatePreset,
+} from '@/stores/catalogStore'
 import { useViewStore } from '@/stores/viewStore'
 import { addDays, todayDueOn } from '@/utils/dates'
 
@@ -175,23 +181,20 @@ onUnmounted(() => window.removeEventListener('keydown', onKeydown))
     >
       <Plus :size="24" :stroke-width="1.75" aria-hidden="true" />
     </button>
-    <div
+    <ActionToast
       v-if="catalog.undoEntry"
-      role="status"
-      class="fixed inset-x-4 z-30 flex items-center justify-between gap-3 rounded-2xl border border-line bg-surface px-4 py-3 text-sm shadow-[var(--shadow)] lg:inset-x-auto lg:end-6 lg:w-96"
-      :style="{ bottom: 'calc(5.25rem + env(safe-area-inset-bottom))' }"
-    >
-      <p>{{ catalog.undoEntry.message }}</p>
-      <button type="button" class="min-h-11 shrink-0 rounded-xl px-3 font-medium text-accent" @click="catalog.undo()">{{ fa.task.undo }}</button>
-    </div>
-    <p
+      :key="`undo-${catalog.undoEntry.message}`"
+      :message="catalog.undoEntry.message"
+      :duration-ms="UNDO_DURATION_MS"
+      :action-label="fa.task.undo"
+      @action="catalog.undo()"
+    />
+    <ActionToast
       v-else-if="catalog.notice"
-      role="status"
-      class="fixed inset-x-4 z-30 rounded-2xl border border-line bg-surface px-4 py-3 text-sm shadow-[var(--shadow)] lg:inset-x-auto lg:end-6 lg:w-80"
-      :style="{ bottom: 'calc(5.25rem + env(safe-area-inset-bottom))' }"
-    >
-      {{ catalog.notice }}
-    </p>
+      :key="`notice-${catalog.notice}`"
+      :message="catalog.notice"
+      :duration-ms="NOTICE_DURATION_MS"
+    />
     <TaskSheet />
     <InstallBanner />
     <PwaUpdateBanner />
