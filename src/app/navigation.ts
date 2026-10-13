@@ -23,6 +23,7 @@ export const primaryNav: NavItem[] = [
   { name: 'work', label: fa.nav.work, icon: ListChecks },
   { name: 'inbox', label: fa.nav.inbox, icon: Inbox },
   { name: 'calendar', label: fa.nav.calendar, icon: CalendarRange },
+  { name: 'focus', label: fa.nav.focus, icon: Timer },
 ]
 
 export const moreNav: NavItem = { name: 'more', label: fa.nav.more, icon: Ellipsis }
@@ -31,7 +32,6 @@ export const libraryNav: NavItem[] = [
   { name: 'tasks', label: fa.nav.tasks, icon: ListTodo },
   { name: 'completed', label: fa.nav.completed, icon: CircleCheck },
   { name: 'lists', label: fa.nav.lists, icon: Folders },
-  { name: 'focus', label: fa.nav.focus, icon: Timer },
   { name: 'stats', label: fa.nav.stats, icon: ChartColumn },
   { name: 'settings', label: fa.nav.settings, icon: Settings },
 ]

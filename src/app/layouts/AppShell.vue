@@ -163,7 +163,7 @@ onUnmounted(() => window.removeEventListener('keydown', onKeydown))
       :style="{ paddingBottom: 'env(safe-area-inset-bottom)' }"
       :aria-label="fa.nav.primary"
     >
-      <ul class="grid grid-cols-4 gap-1 px-1.5 pt-1.5">
+      <ul class="grid grid-cols-5 gap-1 px-1.5 pt-1.5">
         <li v-for="item in primaryNav" :key="item.name">
           <RouterLink
             :to="{ name: item.name }"
