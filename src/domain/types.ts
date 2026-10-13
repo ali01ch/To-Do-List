@@ -144,4 +144,8 @@ export interface NewFocusSession {
 
 export const SETTING_KEYS = {
   theme: 'theme',
+  focusTimerStyle: 'focusTimerStyle',
 } as const
+
+export const FOCUS_TIMER_STYLES = ['digital', 'ring'] as const
+export type FocusTimerStyle = (typeof FOCUS_TIMER_STYLES)[number]

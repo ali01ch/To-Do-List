@@ -1,8 +1,31 @@
 import { defineStore } from 'pinia'
-import { ref } from 'vue'
+import { computed, ref } from 'vue'
+import { FOCUS_TIMER_STYLE_KEY } from '@/app/version'
 import { toDataError, type DataErrorCode } from '@/domain/errors'
-import { focusRepository } from '@/repositories/container'
+import { FOCUS_TIMER_STYLES, SETTING_KEYS, type FocusTimerStyle } from '@/domain/types'
+import { focusRepository, settingsRepository } from '@/repositories/container'
 import { useCatalogStore } from '@/stores/catalogStore'
+
+function isFocusTimerStyle(value: unknown): value is FocusTimerStyle {
+  return typeof value === 'string' && (FOCUS_TIMER_STYLES as readonly string[]).includes(value)
+}
+
+function readStyleMirror(): FocusTimerStyle | null {
+  try {
+    const value = localStorage.getItem(FOCUS_TIMER_STYLE_KEY)
+    return isFocusTimerStyle(value) ? value : null
+  } catch {
+    return null
+  }
+}
+
+function writeStyleMirror(style: FocusTimerStyle): void {
+  try {
+    localStorage.setItem(FOCUS_TIMER_STYLE_KEY, style)
+  } catch {
+    // IndexedDB remains the durable store.
+  }
+}
 
 export const useFocusStore = defineStore('focus', () => {
   const kind = ref<'focus' | 'break'>('focus')
@@ -12,9 +35,15 @@ export const useFocusStore = defineStore('focus', () => {
   const running = ref(false)
   const taskId = ref<string | null>(null)
   const error = ref<DataErrorCode | null>(null)
+  const timerStyle = ref<FocusTimerStyle>(readStyleMirror() ?? 'ring')
   let endsAt = 0
   let timer = 0
   let finishing = false
+  let styleHydrated = false
+
+  const totalMs = computed(
+    () => (kind.value === 'focus' ? focusMinutes.value : breakMinutes.value) * 60 * 1000,
+  )
 
   function stopTimer(): void {
     window.clearInterval(timer)
@@ -24,7 +53,7 @@ export const useFocusStore = defineStore('focus', () => {
 
   function applyDurations(): void {
     if (running.value) return
-    remainingMs.value = (kind.value === 'focus' ? focusMinutes.value : breakMinutes.value) * 60 * 1000
+    remainingMs.value = totalMs.value
   }
 
   function tick(): void {
@@ -84,18 +113,47 @@ export const useFocusStore = defineStore('focus', () => {
     if (kind.value === 'break') applyDurations()
   }
 
+  async function hydrateTimerStyle(): Promise<void> {
+    if (styleHydrated) return
+    styleHydrated = true
+    try {
+      const stored = await settingsRepository.get(SETTING_KEYS.focusTimerStyle)
+      if (isFocusTimerStyle(stored)) {
+        timerStyle.value = stored
+        writeStyleMirror(stored)
+      }
+    } catch {
+      // Keep mirror / default style.
+    }
+  }
+
+  async function setTimerStyle(next: FocusTimerStyle): Promise<void> {
+    if (!isFocusTimerStyle(next) || timerStyle.value === next) return
+    timerStyle.value = next
+    writeStyleMirror(next)
+    try {
+      await settingsRepository.set(SETTING_KEYS.focusTimerStyle, next)
+    } catch (caught) {
+      error.value = toDataError(caught).code
+    }
+  }
+
   return {
     kind,
     focusMinutes,
     breakMinutes,
     remainingMs,
+    totalMs,
     running,
     taskId,
     error,
+    timerStyle,
     start,
     pause,
     finish,
     setFocusMinutes,
     setBreakMinutes,
+    hydrateTimerStyle,
+    setTimerStyle,
   }
 })
