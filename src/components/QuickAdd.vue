@@ -28,9 +28,6 @@ async function submit(): Promise<void> {
   }
 }
 
-function openDetails(): void {
-  catalog.openCreate({ ...props.preset, title: title.value })
-}
 </script>
 
 <template>
@@ -51,9 +48,6 @@ function openDetails(): void {
       :disabled="pending || title.trim().length === 0"
     >
       {{ fa.task.add }}
-    </button>
-    <button type="button" class="inline-flex min-h-11 items-center rounded-xl px-3 text-sm text-muted" @click="openDetails">
-      {{ fa.task.details }}
     </button>
   </form>
 </template>

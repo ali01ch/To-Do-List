@@ -85,7 +85,6 @@ export const fa = {
   task: {
     placeholder: 'کار تازه‌ای بنویسید',
     add: 'افزودن',
-    details: 'جزئیات',
     edit: 'ویرایش کار',
     new: 'کار تازه',
     save: 'ذخیره',
