@@ -3,19 +3,18 @@ import { computed, ref, watch } from 'vue'
 import type { Priority, RecurrenceRule } from '@/domain/types'
 import { PRIORITIES } from '@/domain/types'
 import AppSheet from '@/components/AppSheet.vue'
+import JalaliDatePicker from '@/components/JalaliDatePicker.vue'
 import { fa } from '@/locales/fa'
 import { buildWeeklyRecurrence, firstMatchingDueOn } from '@/services/recurrence'
 import { useCatalogStore } from '@/stores/catalogStore'
 import { formatJalaliDate, todayDueOn } from '@/utils/dates'
-import { toPersianDigits } from '@/utils/digits'
-import { formatJalaliNumeric, parseJalaliInput } from '@/utils/jalali'
 import { WEEKDAY_JS_ORDER, formatWeekdayLabels, weekdayLabel, weekdayShortLabel } from '@/utils/weekdays'
 
 const catalog = useCatalogStore()
 const title = ref('')
 const description = ref('')
 const notes = ref('')
-const dueText = ref('')
+const dueOn = ref<string | null>(null)
 const dueTime = ref('')
 const priority = ref<Priority>('none')
 const listId = ref('')
@@ -41,7 +40,7 @@ watch(
       title.value = editor.title
       description.value = ''
       notes.value = ''
-      dueText.value = editor.dueOn ? toPersianDigits(formatJalaliNumeric(editor.dueOn)) : ''
+      dueOn.value = editor.dueOn
       dueTime.value = ''
       priority.value = 'none'
       listId.value = editor.listId ?? ''
@@ -54,7 +53,7 @@ watch(
     title.value = task.title
     description.value = task.description
     notes.value = task.notes
-    dueText.value = task.dueOn ? toPersianDigits(formatJalaliNumeric(task.dueOn)) : ''
+    dueOn.value = task.dueOn
     dueTime.value = task.dueTime ?? ''
     priority.value = task.priority
     listId.value = task.listId ?? ''
@@ -66,6 +65,10 @@ watch(
   },
   { immediate: true },
 )
+
+watch(dueOn, (value) => {
+  if (!value) dueTime.value = ''
+})
 
 function toggleTag(id: string): void {
   tagIds.value = tagIds.value.includes(id) ? tagIds.value.filter((tagId) => tagId !== id) : [...tagIds.value, id]
@@ -85,18 +88,12 @@ async function addTag(): Promise<void> {
 }
 
 function readDue(): { dueOn: string | null; dueTime: string | null } | undefined {
-  const text = dueText.value.trim()
-  if (!text) return { dueOn: null, dueTime: null }
-  const dueOn = parseJalaliInput(text)
-  if (!dueOn) {
-    formError.value = fa.errors.INVALID_DATE
-    return undefined
-  }
+  if (!dueOn.value) return { dueOn: null, dueTime: null }
   if (dueTime.value && !/^(\d{2}):(\d{2})$/.test(dueTime.value)) {
     formError.value = fa.errors.INVALID_TIME
     return undefined
   }
-  return { dueOn, dueTime: dueTime.value || null }
+  return { dueOn: dueOn.value, dueTime: dueTime.value || null }
 }
 
 function readRecurrence(dueOn: string | null): { dueOn: string | null; recurrence: RecurrenceRule | null } {
@@ -163,16 +160,20 @@ async function save(): Promise<void> {
         <label class="mt-3 block text-sm" for="task-notes">{{ fa.task.notes }}</label>
         <textarea id="task-notes" v-model="notes" rows="2" class="mt-1 w-full rounded-xl border border-line bg-canvas px-3 py-2 text-sm" />
 
-        <div class="mt-3 grid gap-3 sm:grid-cols-2">
-          <div>
-            <label class="block text-sm" for="task-due">{{ fa.task.due }}</label>
-            <input id="task-due" v-model="dueText" class="mt-1 min-h-11 w-full rounded-xl border border-line bg-canvas px-3 text-sm" :placeholder="fa.task.duePlaceholder" inputmode="numeric" />
-            <button type="button" class="mt-1 text-xs text-muted" @click="dueText = ''; dueTime = ''">{{ fa.task.clearDue }}</button>
-          </div>
-          <div>
-            <label class="block text-sm" for="task-time">{{ fa.task.time }}</label>
-            <input id="task-time" v-model="dueTime" type="time" dir="ltr" class="mt-1 min-h-11 w-full rounded-xl border border-line bg-canvas px-3 text-sm" />
-          </div>
+        <div class="mt-3">
+          <label class="block text-sm" for="task-due">{{ fa.task.due }}</label>
+          <JalaliDatePicker v-model="dueOn" />
+        </div>
+        <div class="mt-3 max-w-xs">
+          <label class="block text-sm" for="task-time">{{ fa.task.time }}</label>
+          <input
+            id="task-time"
+            v-model="dueTime"
+            type="time"
+            dir="ltr"
+            class="mt-1 min-h-11 w-full rounded-xl border border-line bg-canvas px-3 text-sm disabled:opacity-50"
+            :disabled="!dueOn"
+          />
         </div>
 
         <fieldset class="mt-4">
