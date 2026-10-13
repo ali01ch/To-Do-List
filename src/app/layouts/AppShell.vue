@@ -84,11 +84,20 @@ onUnmounted(() => window.removeEventListener('keydown', onKeydown))
               <li v-for="item in primaryNav" :key="item.name">
                 <RouterLink
                   :to="{ name: item.name }"
-                  class="flex min-h-11 items-center gap-3 rounded-xl px-3 text-sm text-muted transition-colors hover:bg-surface-muted hover:text-ink"
-                  :class="isCurrent(item.name) ? 'bg-accent-soft font-medium text-accent' : ''"
+                  class="flex min-h-11 items-center gap-3 rounded-xl px-3 text-sm transition-colors"
+                  :class="
+                    isCurrent(item.name)
+                      ? 'bg-accent-soft font-semibold text-accent ring-1 ring-accent/25'
+                      : 'text-muted hover:bg-surface-muted hover:text-ink'
+                  "
                   :aria-current="isCurrent(item.name) ? 'page' : undefined"
                 >
-                  <component :is="item.icon" :size="20" :stroke-width="1.75" aria-hidden="true" />
+                  <component
+                    :is="item.icon"
+                    :size="20"
+                    :stroke-width="isCurrent(item.name) ? 2.25 : 1.75"
+                    aria-hidden="true"
+                  />
                   {{ item.label }}
                 </RouterLink>
               </li>
@@ -100,11 +109,20 @@ onUnmounted(() => window.removeEventListener('keydown', onKeydown))
               <li v-for="item in libraryNav" :key="item.name">
                 <RouterLink
                   :to="{ name: item.name }"
-                  class="flex min-h-11 items-center gap-3 rounded-xl px-3 text-sm text-muted transition-colors hover:bg-surface-muted hover:text-ink"
-                  :class="isCurrent(item.name) ? 'bg-accent-soft font-medium text-accent' : ''"
+                  class="flex min-h-11 items-center gap-3 rounded-xl px-3 text-sm transition-colors"
+                  :class="
+                    isCurrent(item.name)
+                      ? 'bg-accent-soft font-semibold text-accent ring-1 ring-accent/25'
+                      : 'text-muted hover:bg-surface-muted hover:text-ink'
+                  "
                   :aria-current="isCurrent(item.name) ? 'page' : undefined"
                 >
-                  <component :is="item.icon" :size="20" :stroke-width="1.75" aria-hidden="true" />
+                  <component
+                    :is="item.icon"
+                    :size="20"
+                    :stroke-width="isCurrent(item.name) ? 2.25 : 1.75"
+                    aria-hidden="true"
+                  />
                   {{ item.label }}
                 </RouterLink>
               </li>
@@ -145,26 +163,50 @@ onUnmounted(() => window.removeEventListener('keydown', onKeydown))
       :style="{ paddingBottom: 'env(safe-area-inset-bottom)' }"
       :aria-label="fa.nav.primary"
     >
-      <ul class="grid grid-cols-5">
+      <ul class="grid grid-cols-4 gap-1 px-1.5 pt-1.5">
         <li v-for="item in primaryNav" :key="item.name">
           <RouterLink
             :to="{ name: item.name }"
-            class="flex min-h-14 flex-col items-center justify-center gap-1 px-1 text-[0.7rem] leading-4 text-muted"
-            :class="isCurrent(item.name) ? 'text-accent' : ''"
+            class="relative flex min-h-14 flex-col items-center justify-center gap-1 rounded-xl px-1 text-[0.7rem] leading-4 transition-colors"
+            :class="
+              isCurrent(item.name)
+                ? 'bg-accent-soft font-semibold text-accent'
+                : 'text-muted hover:bg-surface-muted'
+            "
             :aria-current="isCurrent(item.name) ? 'page' : undefined"
           >
-            <component :is="item.icon" :size="22" :stroke-width="1.75" aria-hidden="true" />
+            <span
+              v-if="isCurrent(item.name)"
+              class="absolute inset-x-4 top-0 h-0.5 rounded-full bg-accent"
+              aria-hidden="true"
+            />
+            <component
+              :is="item.icon"
+              :size="22"
+              :stroke-width="isCurrent(item.name) ? 2.35 : 1.75"
+              aria-hidden="true"
+            />
             {{ item.label }}
           </RouterLink>
         </li>
         <li>
           <RouterLink
             :to="{ name: moreNav.name }"
-            class="flex min-h-14 flex-col items-center justify-center gap-1 px-1 text-[0.7rem] leading-4 text-muted"
-            :class="moreActive ? 'text-accent' : ''"
+            class="relative flex min-h-14 flex-col items-center justify-center gap-1 rounded-xl px-1 text-[0.7rem] leading-4 transition-colors"
+            :class="moreActive ? 'bg-accent-soft font-semibold text-accent' : 'text-muted hover:bg-surface-muted'"
             :aria-current="moreActive ? 'page' : undefined"
           >
-            <component :is="moreNav.icon" :size="22" :stroke-width="1.75" aria-hidden="true" />
+            <span
+              v-if="moreActive"
+              class="absolute inset-x-4 top-0 h-0.5 rounded-full bg-accent"
+              aria-hidden="true"
+            />
+            <component
+              :is="moreNav.icon"
+              :size="22"
+              :stroke-width="moreActive ? 2.35 : 1.75"
+              aria-hidden="true"
+            />
             {{ moreNav.label }}
           </RouterLink>
         </li>
