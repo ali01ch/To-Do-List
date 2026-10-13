@@ -19,7 +19,7 @@ import {
   type CreatePreset,
 } from '@/stores/catalogStore'
 import { useViewStore } from '@/stores/viewStore'
-import { addDays, todayDueOn } from '@/utils/dates'
+import { todayDueOn } from '@/utils/dates'
 
 const route = useRoute()
 const store = useAppStore()
@@ -29,7 +29,7 @@ const moreActive = computed(() => isMoreSection(route.name))
 const errorMessage = computed(() => (store.dbError ? errorText(store.dbError) : fa.errors.UNKNOWN))
 const showFab = computed(
   () =>
-    ['today', 'upcoming', 'inbox', 'tasks', 'calendar', 'list'].includes(String(route.name)) &&
+    ['work', 'inbox', 'tasks', 'calendar', 'list'].includes(String(route.name)) &&
     catalog.editor === null &&
     !catalog.pendingDelete &&
     !catalog.undoEntry &&
@@ -50,8 +50,7 @@ function isCurrent(name: string): boolean {
 }
 
 function createPreset(): CreatePreset {
-  if (route.name === 'today') return { dueOn: todayDueOn() }
-  if (route.name === 'upcoming') return { dueOn: addDays(todayDueOn(), 1) }
+  if (route.name === 'work') return { dueOn: todayDueOn() }
   if (route.name === 'inbox') return { dueOn: null }
   if (route.name === 'calendar') return { dueOn: view.calendarDueOn ?? todayDueOn() }
   if (route.name === 'list') return { listId: String(route.params.id) }

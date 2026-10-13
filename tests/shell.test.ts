@@ -12,7 +12,7 @@ import { useCatalogStore } from '@/stores/catalogStore'
 describe('app shell', () => {
   it('renders the Persian shell and opens the local database', async () => {
     const pinia = createPinia()
-    await router.push('/today')
+    await router.push('/work')
     await router.isReady()
     const wrapper = mount(App, { global: { plugins: [pinia, router] } })
     const store = useAppStore(pinia)
@@ -20,9 +20,9 @@ describe('app shell', () => {
     await flushPromises()
 
     expect(wrapper.text()).toContain('روزنو')
-    expect(wrapper.text()).toContain('امروز')
+    expect(wrapper.text()).toContain('کارها')
     expect(wrapper.text()).not.toContain('هنوز به داده‌ها وصل نشده')
-    expect(wrapper.text()).toContain('کاری برای امروز نیست')
+    expect(wrapper.text()).toContain('کاری در این بازه نیست')
     const input = wrapper.get('input[name="quick-title"]')
     await input.setValue('خرید نان')
     expect(wrapper.get('form[name="quick-add"] button[type="submit"]').attributes('disabled')).toBeUndefined()
@@ -34,6 +34,6 @@ describe('app shell', () => {
     expect(catalog.actionError).toBeNull()
     expect(wrapper.text()).toContain('خرید نان')
     expect(store.dbStatus).toBe('ready')
-    expect(document.title).toContain('امروز')
+    expect(document.title).toContain('کارها')
   })
 })

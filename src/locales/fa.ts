@@ -6,6 +6,7 @@ export const fa = {
   skipToContent: 'رفتن به محتوا',
   retry: 'تلاش دوباره',
   nav: {
+    work: 'کارها',
     today: 'امروز',
     upcoming: 'آینده',
     inbox: 'ورودی‌ها',
@@ -23,6 +24,10 @@ export const fa = {
     library: 'کتابخانه',
   },
   sections: {
+    work: {
+      title: 'کارها',
+      description: 'کارهای امروز و روزهای آینده، در یک نگاه.',
+    },
     today: {
       title: 'امروز',
       description: 'کارهای امروز و آنچه از روزهای قبل مانده است.',
@@ -65,6 +70,8 @@ export const fa = {
     description: 'بخش‌های دیگر برنامه.',
   },
   empty: {
+    workTitle: 'کاری در این بازه نیست',
+    workBody: 'یک کار تازه اضافه کنید یا فیلتر را عوض کنید.',
     todayTitle: 'کاری برای امروز نیست',
     todayBody: 'عنوان را بنویسید و اضافه کنید. جزئیات را بعداً هم می‌توانید کامل کنید.',
     upcomingTitle: 'کار آینده‌ای نیست',
@@ -115,7 +122,16 @@ export const fa = {
     close: 'بستن',
     overdue: 'عقب‌افتاده',
     doneToday: 'انجام‌شده امروز',
+    showDoneToday: 'نمایش انجام‌شده‌های امروز',
     progress: 'پیشرفت امروز',
+    workScope: 'بازه کارها',
+    workScopeAll: 'همه',
+    anyPriority: 'هر اولویت',
+    anyList: 'هر فهرست',
+    horizon: 'افق آینده',
+    horizonAll: 'همه آینده',
+    horizonWeek: '۷ روز',
+    horizonMonth: '۳۰ روز',
     select: 'انتخاب',
     selected: 'انتخاب‌شده',
     completeSelected: 'تکمیل انتخاب‌شده‌ها',

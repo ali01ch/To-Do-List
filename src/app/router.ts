@@ -10,8 +10,7 @@ import StatsPage from '@/features/statistics/StatsPage.vue'
 import AllTasksPage from '@/features/tasks/AllTasksPage.vue'
 import CompletedPage from '@/features/tasks/CompletedPage.vue'
 import InboxPage from '@/features/tasks/InboxPage.vue'
-import TodayPage from '@/features/tasks/TodayPage.vue'
-import UpcomingPage from '@/features/tasks/UpcomingPage.vue'
+import WorkPage from '@/features/tasks/WorkPage.vue'
 import { fa } from '@/locales/fa'
 
 declare module 'vue-router' {
@@ -35,9 +34,10 @@ export const router = createRouter({
       path: '/',
       component: AppShell,
       children: [
-        { path: '', redirect: { name: 'today' } },
-        page('today', 'today', TodayPage, fa.sections.today),
-        page('upcoming', 'upcoming', UpcomingPage, fa.sections.upcoming),
+        { path: '', redirect: { name: 'work' } },
+        { path: 'today', redirect: { name: 'work' } },
+        { path: 'upcoming', redirect: { name: 'work' } },
+        page('work', 'work', WorkPage, fa.sections.work),
         page('inbox', 'inbox', InboxPage, fa.sections.inbox),
         page('calendar', 'calendar', CalendarPage, fa.sections.calendar),
         page('tasks', 'tasks', AllTasksPage, fa.sections.tasks),

@@ -1,14 +1,13 @@
 import {
-  CalendarClock,
   CalendarRange,
   ChartColumn,
   CircleCheck,
   Ellipsis,
   Folders,
   Inbox,
+  ListChecks,
   ListTodo,
   Settings,
-  Sun,
   Timer,
 } from '@lucide/vue'
 import type { Component } from 'vue'
@@ -21,8 +20,7 @@ export interface NavItem {
 }
 
 export const primaryNav: NavItem[] = [
-  { name: 'today', label: fa.nav.today, icon: Sun },
-  { name: 'upcoming', label: fa.nav.upcoming, icon: CalendarClock },
+  { name: 'work', label: fa.nav.work, icon: ListChecks },
   { name: 'inbox', label: fa.nav.inbox, icon: Inbox },
   { name: 'calendar', label: fa.nav.calendar, icon: CalendarRange },
 ]
