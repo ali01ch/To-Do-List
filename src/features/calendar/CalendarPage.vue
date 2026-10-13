@@ -66,16 +66,27 @@ function choose(dueOn: string): void {
           type="button"
           class="flex min-h-11 flex-col items-center justify-center rounded-xl text-sm"
           :class="[
-            cell.inMonth ? 'text-ink' : 'text-muted',
-            cell.dueOn === selected ? 'bg-accent text-accent-ink' : 'bg-surface',
+            cell.dueOn === selected
+              ? 'bg-accent text-accent-ink'
+              : cell.inMonth
+                ? 'bg-surface text-ink'
+                : 'bg-surface text-muted',
             cell.dueOn === today && cell.dueOn !== selected ? 'ring-1 ring-accent' : '',
           ]"
           @click="choose(cell.dueOn)"
         >
           {{ toPersianDigits(cell.day) }}
           <span class="mt-0.5 flex h-1.5 gap-0.5" aria-hidden="true">
-            <span v-if="counts(cell.dueOn).open" class="size-1.5 rounded-full bg-overdue" />
-            <span v-else-if="counts(cell.dueOn).done" class="size-1.5 rounded-full bg-accent" />
+            <span
+              v-if="counts(cell.dueOn).open"
+              class="size-1.5 rounded-full"
+              :class="cell.dueOn === selected ? 'bg-accent-ink' : 'bg-overdue'"
+            />
+            <span
+              v-else-if="counts(cell.dueOn).done"
+              class="size-1.5 rounded-full"
+              :class="cell.dueOn === selected ? 'bg-accent-ink/80' : 'bg-accent'"
+            />
           </span>
         </button>
       </div>
