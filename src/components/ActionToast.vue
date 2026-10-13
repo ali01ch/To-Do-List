@@ -39,7 +39,7 @@ const emit = defineEmits<{
 <style scoped>
 .toast-progress {
   width: 100%;
-  transform-origin: inline-start;
+  transform-origin: right;
   animation-name: toast-progress;
   animation-timing-function: linear;
   animation-fill-mode: forwards;

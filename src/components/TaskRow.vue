@@ -73,7 +73,10 @@ const today = todayDueOn()
         <span v-for="tag in tags" :key="tag">#{{ tag }}</span>
       </span>
     </div>
-    <div class="flex shrink-0" @click.stop>
+    <div class="flex shrink-0" dir="ltr" @click.stop>
+      <button type="button" class="grid size-11 place-items-center text-muted" :aria-label="fa.task.remove" @click="emit('remove')">
+        <Trash2 :size="18" :stroke-width="1.75" aria-hidden="true" />
+      </button>
       <button type="button" class="grid size-11 place-items-center text-muted" :aria-label="fa.task.edit" @click="emit('edit')">
         <Pencil :size="18" :stroke-width="1.75" aria-hidden="true" />
       </button>
@@ -94,9 +97,6 @@ const today = todayDueOn()
         @click="emit('move', 1)"
       >
         <ArrowDown :size="18" :stroke-width="1.75" aria-hidden="true" />
-      </button>
-      <button type="button" class="grid size-11 place-items-center text-muted" :aria-label="fa.task.remove" @click="emit('remove')">
-        <Trash2 :size="18" :stroke-width="1.75" aria-hidden="true" />
       </button>
     </div>
   </article>
