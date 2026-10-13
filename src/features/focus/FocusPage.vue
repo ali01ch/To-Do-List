@@ -64,7 +64,7 @@ function onBreakMinutes(event: Event): void {
       />
     </div>
 
-    <div class="mt-6 flex justify-center gap-2">
+    <div class="mt-6 flex flex-wrap justify-center gap-2">
       <button
         v-if="!focus.running"
         type="button"
@@ -82,6 +82,14 @@ function onBreakMinutes(event: Event): void {
         @click="focus.pause()"
       >
         {{ fa.task.focusPause }}
+      </button>
+      <button
+        type="button"
+        class="min-h-11 rounded-xl border border-line bg-surface px-5 text-sm text-muted"
+        :disabled="!focus.running && focus.remainingMs >= focus.totalMs"
+        @click="focus.reset()"
+      >
+        {{ fa.task.focusReset }}
       </button>
     </div>
 

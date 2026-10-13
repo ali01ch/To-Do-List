@@ -74,6 +74,11 @@ export const useFocusStore = defineStore('focus', () => {
     stopTimer()
   }
 
+  function reset(): void {
+    stopTimer()
+    applyDurations()
+  }
+
   async function finish(): Promise<void> {
     if (finishing) return
     finishing = true
@@ -150,6 +155,7 @@ export const useFocusStore = defineStore('focus', () => {
     timerStyle,
     start,
     pause,
+    reset,
     finish,
     setFocusMinutes,
     setBreakMinutes,

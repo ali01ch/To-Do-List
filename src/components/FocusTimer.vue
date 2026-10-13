@@ -22,11 +22,54 @@ const progress = computed(() => {
   return Math.min(1, Math.max(0, props.remainingMs / props.totalMs))
 })
 
-const size = 240
-const stroke = 10
-const radius = (size - stroke) / 2
-const circumference = 2 * Math.PI * radius
-const dashOffset = computed(() => circumference * (1 - progress.value))
+/** Single hand: full at top (۰), sweeps clockwise as time elapses across a 60-minute dial. */
+const handAngle = computed(() => (1 - progress.value) * 360)
+
+const size = 260
+const center = size / 2
+const dialRadius = 112
+const numberRadius = 86
+const handLength = 78
+const tickOuter = dialRadius
+const tickInnerMajor = dialRadius - 14
+const tickInnerMinor = dialRadius - 8
+
+/** Minute marks every 5 minutes on a 60-minute face: 0, 5, …, 55 */
+const minuteMarks = Array.from({ length: 12 }, (_, index) => {
+  const minute = index * 5
+  const angle = (index / 12) * Math.PI * 2 - Math.PI / 2
+  return {
+    minute,
+    label: toPersianDigits(minute),
+    x: center + Math.cos(angle) * numberRadius,
+    y: center + Math.sin(angle) * numberRadius,
+    tick: {
+      x1: center + Math.cos(angle) * tickInnerMajor,
+      y1: center + Math.sin(angle) * tickInnerMajor,
+      x2: center + Math.cos(angle) * tickOuter,
+      y2: center + Math.sin(angle) * tickOuter,
+    },
+  }
+})
+
+const minorTicks = Array.from({ length: 60 }, (_, index) => {
+  if (index % 5 === 0) return null
+  const angle = (index / 60) * Math.PI * 2 - Math.PI / 2
+  return {
+    x1: center + Math.cos(angle) * tickInnerMinor,
+    y1: center + Math.sin(angle) * tickInnerMinor,
+    x2: center + Math.cos(angle) * tickOuter,
+    y2: center + Math.sin(angle) * tickOuter,
+  }
+}).filter((tick): tick is NonNullable<typeof tick> => tick !== null)
+
+const hand = computed(() => {
+  const angle = (handAngle.value / 360) * Math.PI * 2 - Math.PI / 2
+  return {
+    x2: center + Math.cos(angle) * handLength,
+    y2: center + Math.sin(angle) * handLength,
+  }
+})
 </script>
 
 <template>
@@ -36,36 +79,60 @@ const dashOffset = computed(() => circumference * (1 - progress.value))
       <p class="mt-2 text-sm text-muted">{{ label }}</p>
     </div>
 
-    <div v-else class="relative grid place-items-center" :style="{ width: `${size}px`, height: `${size}px` }">
-      <svg
-        class="absolute inset-0 -rotate-90"
-        :width="size"
-        :height="size"
-        :viewBox="`0 0 ${size} ${size}`"
-        aria-hidden="true"
-      >
-        <circle
-          class="fill-none stroke-line"
-          :cx="size / 2"
-          :cy="size / 2"
-          :r="radius"
-          :stroke-width="stroke"
-        />
-        <circle
-          class="fill-none stroke-accent transition-[stroke-dashoffset] duration-200 ease-linear"
-          :cx="size / 2"
-          :cy="size / 2"
-          :r="radius"
-          :stroke-width="stroke"
-          stroke-linecap="round"
-          :stroke-dasharray="circumference"
-          :stroke-dashoffset="dashOffset"
-        />
-      </svg>
-      <div class="relative z-10 text-center">
-        <p class="text-4xl font-semibold tracking-tight tabular-nums" dir="ltr">{{ clock }}</p>
-        <p class="mt-1 text-sm text-muted">{{ label }}</p>
+    <div v-else class="flex flex-col items-center">
+      <div class="relative" :style="{ width: `${size}px`, height: `${size}px` }">
+        <svg :width="size" :height="size" :viewBox="`0 0 ${size} ${size}`" role="img" :aria-label="`${label} ${clock}`">
+          <circle class="fill-surface stroke-line" :cx="center" :cy="center" :r="dialRadius" stroke-width="2" />
+          <line
+            v-for="(tick, index) in minorTicks"
+            :key="`m-${index}`"
+            class="stroke-muted/45"
+            :x1="tick.x1"
+            :y1="tick.y1"
+            :x2="tick.x2"
+            :y2="tick.y2"
+            stroke-width="1.5"
+            stroke-linecap="round"
+          />
+          <line
+            v-for="mark in minuteMarks"
+            :key="`h-${mark.minute}`"
+            class="stroke-ink"
+            :x1="mark.tick.x1"
+            :y1="mark.tick.y1"
+            :x2="mark.tick.x2"
+            :y2="mark.tick.y2"
+            stroke-width="2.5"
+            stroke-linecap="round"
+          />
+          <text
+            v-for="mark in minuteMarks"
+            :key="`n-${mark.minute}`"
+            class="fill-ink"
+            :x="mark.x"
+            :y="mark.y"
+            text-anchor="middle"
+            dominant-baseline="central"
+            font-size="15"
+            font-weight="600"
+          >
+            {{ mark.label }}
+          </text>
+          <line
+            class="stroke-accent"
+            :x1="center"
+            :y1="center"
+            :x2="hand.x2"
+            :y2="hand.y2"
+            stroke-width="4"
+            stroke-linecap="round"
+          />
+          <circle class="fill-accent" :cx="center" :cy="center" r="7" />
+          <circle class="fill-accent-ink" :cx="center" :cy="center" r="2.5" />
+        </svg>
       </div>
+      <p class="mt-3 text-2xl font-semibold tracking-tight tabular-nums text-ink" dir="ltr">{{ clock }}</p>
+      <p class="mt-1 text-sm text-muted">{{ label }}</p>
     </div>
   </div>
 </template>

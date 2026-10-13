@@ -199,6 +199,7 @@ export const fa = {
     focusStart: 'شروع',
     focusPause: 'توقف',
     focusResume: 'ادامه',
+    focusReset: 'ریست',
     focusMinutes: 'دقیقه تمرکز',
     breakMinutes: 'دقیقه استراحت',
     breakTime: 'وقت استراحت',
