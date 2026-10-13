@@ -70,9 +70,9 @@ onUnmounted(() => window.removeEventListener('keydown', onKeydown))
 </script>
 
 <template>
-  <div class="min-h-dvh bg-canvas text-ink">
+  <div class="flex h-dvh flex-col overflow-hidden bg-canvas text-ink lg:h-auto lg:min-h-dvh lg:overflow-visible">
     <a class="skip-link" href="#main">{{ fa.skipToContent }}</a>
-    <div class="lg:grid lg:grid-cols-[17rem_minmax(0,1fr)]">
+    <div class="flex min-h-0 flex-1 flex-col lg:grid lg:grid-cols-[17rem_minmax(0,1fr)]">
       <aside class="sticky top-0 hidden h-dvh flex-col border-e border-line bg-surface lg:flex">
         <div class="px-5 py-6">
           <BrandMark />
@@ -131,16 +131,16 @@ onUnmounted(() => window.removeEventListener('keydown', onKeydown))
         </nav>
       </aside>
 
-      <div class="min-w-0">
+      <div class="flex min-h-0 min-w-0 flex-1 flex-col">
         <header
-          class="sticky top-0 z-20 border-b border-line bg-canvas/90 px-4 py-3 backdrop-blur lg:hidden"
+          class="shrink-0 border-b border-line bg-surface/95 px-4 py-3 backdrop-blur lg:hidden"
           :style="{ paddingTop: 'max(0.75rem, env(safe-area-inset-top))' }"
         >
           <BrandMark />
         </header>
         <main
           id="main"
-          class="mx-auto w-full max-w-[40rem] px-4 pt-6 pb-[calc(6rem+env(safe-area-inset-bottom))] lg:px-8 lg:pt-10 lg:pb-16"
+          class="mx-auto min-h-0 w-full max-w-[40rem] flex-1 overflow-y-auto overscroll-y-contain px-4 pt-6 pb-6 lg:overflow-visible lg:px-8 lg:pt-10 lg:pb-16"
         >
           <div
             v-if="store.dbStatus === 'error'"
@@ -159,7 +159,7 @@ onUnmounted(() => window.removeEventListener('keydown', onKeydown))
     </div>
 
     <nav
-      class="fixed inset-x-0 bottom-0 z-30 border-t border-line bg-surface/95 backdrop-blur lg:hidden"
+      class="shrink-0 border-t border-line bg-surface/95 backdrop-blur lg:hidden"
       :style="{ paddingBottom: 'env(safe-area-inset-bottom)' }"
       :aria-label="fa.nav.primary"
     >

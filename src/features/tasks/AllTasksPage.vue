@@ -59,56 +59,105 @@ async function completeSelected(): Promise<void> {
     <p v-if="catalog.status === 'loading'" class="mt-6 text-sm text-muted">{{ fa.empty.loading }}</p>
     <template v-else>
       <QuickAdd />
-      <div class="mt-4 grid gap-2 sm:grid-cols-2">
-        <input v-model="view.search" class="min-h-11 rounded-xl border border-line bg-surface px-3 text-sm" type="search" :placeholder="fa.task.search" :aria-label="fa.task.search" />
-        <select v-model="view.sort" class="min-h-11 rounded-xl border border-line bg-surface px-3 text-sm" :aria-label="fa.task.sort">
-          <option value="manual">{{ fa.task.manual }}</option>
-          <option value="due">{{ fa.task.byDue }}</option>
-          <option value="priority">{{ fa.task.byPriority }}</option>
-          <option value="title">{{ fa.task.byTitle }}</option>
-        </select>
-        <select v-model="view.status" class="min-h-11 rounded-xl border border-line bg-surface px-3 text-sm" :aria-label="fa.task.status">
-          <option value="active">{{ fa.task.active }}</option>
-          <option value="completed">{{ fa.task.completed }}</option>
-          <option value="all">{{ fa.task.any }}</option>
-        </select>
-        <select v-model="view.priority" class="min-h-11 rounded-xl border border-line bg-surface px-3 text-sm" :aria-label="fa.task.priority">
-          <option value="any">{{ fa.task.any }}</option>
-          <option v-for="item in PRIORITIES" :key="item" :value="item">{{ fa.priority[item] }}</option>
-        </select>
-        <select v-model="view.listId" class="min-h-11 rounded-xl border border-line bg-surface px-3 text-sm" :aria-label="fa.task.list">
-          <option value="any">{{ fa.task.any }}</option>
-          <option v-for="list in catalog.lists" :key="list.id" :value="list.id">{{ list.name }}</option>
-        </select>
-        <select v-model="view.due" class="min-h-11 rounded-xl border border-line bg-surface px-3 text-sm" :aria-label="fa.task.dueFilter">
-          <option value="any">{{ fa.task.any }}</option>
-          <option value="today">{{ fa.nav.today }}</option>
-          <option value="upcoming">{{ fa.nav.upcoming }}</option>
-          <option value="overdue">{{ fa.task.overdue }}</option>
-          <option value="none">{{ fa.task.noneDate }}</option>
-        </select>
-      </div>
-      <div v-if="catalog.tags.length" class="mt-3 flex flex-wrap gap-2">
-        <button
-          v-for="tag in catalog.tags"
-          :key="tag.id"
-          type="button"
-          class="min-h-11 rounded-full border border-line px-3 text-sm"
-          :class="view.tagIds.includes(tag.id) ? 'bg-accent-soft text-accent' : ''"
-          :aria-pressed="view.tagIds.includes(tag.id)"
-          @click="view.toggleTag(tag.id)"
-        >
-          {{ tag.name }}
-        </button>
-      </div>
-      <div class="mt-4 flex flex-wrap gap-2">
-        <button type="button" class="min-h-11 rounded-xl bg-surface-muted px-3 text-sm" @click="selecting = !selecting">{{ fa.task.select }}</button>
-        <button v-if="selecting" type="button" class="min-h-11 rounded-xl bg-surface-muted px-3 text-sm" :disabled="selected.length === 0" @click="completeSelected">
-          {{ fa.task.completeSelected }}
-        </button>
-        <button v-if="selecting" type="button" class="min-h-11 rounded-xl bg-danger-soft px-3 text-sm text-danger" :disabled="selected.length === 0" @click="removeSelected">
-          {{ fa.task.deleteSelected }}
-        </button>
+      <div class="mt-5 space-y-4 rounded-2xl border border-line bg-surface p-3 sm:p-4">
+        <div class="grid gap-3 sm:grid-cols-2">
+          <div class="sm:col-span-2">
+            <label class="block text-sm font-medium text-ink" for="tasks-search">{{ fa.task.filterSearch }}</label>
+            <input
+              id="tasks-search"
+              v-model="view.search"
+              class="mt-2 min-h-11 w-full rounded-xl border border-line bg-canvas px-3 text-sm"
+              type="search"
+              :placeholder="fa.task.search"
+            />
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-ink" for="tasks-sort">{{ fa.task.sort }}</label>
+            <select id="tasks-sort" v-model="view.sort" class="mt-2 min-h-11 w-full rounded-xl border border-line bg-canvas px-3 text-sm">
+              <option value="manual">{{ fa.task.manual }}</option>
+              <option value="due">{{ fa.task.byDue }}</option>
+              <option value="priority">{{ fa.task.byPriority }}</option>
+              <option value="title">{{ fa.task.byTitle }}</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-ink" for="tasks-status">{{ fa.task.filterStatus }}</label>
+            <select id="tasks-status" v-model="view.status" class="mt-2 min-h-11 w-full rounded-xl border border-line bg-canvas px-3 text-sm">
+              <option value="active">{{ fa.task.active }}</option>
+              <option value="completed">{{ fa.task.completed }}</option>
+              <option value="all">{{ fa.task.any }}</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-ink" for="tasks-priority">{{ fa.task.filterPriority }}</label>
+            <select id="tasks-priority" v-model="view.priority" class="mt-2 min-h-11 w-full rounded-xl border border-line bg-canvas px-3 text-sm">
+              <option value="any">{{ fa.task.anyPriority }}</option>
+              <option v-for="item in PRIORITIES" :key="item" :value="item">{{ fa.priority[item] }}</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-ink" for="tasks-list">{{ fa.task.filterList }}</label>
+            <select id="tasks-list" v-model="view.listId" class="mt-2 min-h-11 w-full rounded-xl border border-line bg-canvas px-3 text-sm">
+              <option value="any">{{ fa.task.anyList }}</option>
+              <option v-for="list in catalog.lists" :key="list.id" :value="list.id">{{ list.name }}</option>
+            </select>
+          </div>
+          <div class="sm:col-span-2">
+            <label class="block text-sm font-medium text-ink" for="tasks-due">{{ fa.task.dueFilter }}</label>
+            <select id="tasks-due" v-model="view.due" class="mt-2 min-h-11 w-full rounded-xl border border-line bg-canvas px-3 text-sm">
+              <option value="any">{{ fa.task.any }}</option>
+              <option value="today">{{ fa.nav.today }}</option>
+              <option value="upcoming">{{ fa.nav.upcoming }}</option>
+              <option value="overdue">{{ fa.task.overdue }}</option>
+              <option value="none">{{ fa.task.noneDate }}</option>
+            </select>
+          </div>
+        </div>
+
+        <div v-if="catalog.tags.length">
+          <p id="tasks-tags-label" class="text-sm font-medium text-ink">{{ fa.task.filterTags }}</p>
+          <p class="mt-0.5 text-xs text-muted">{{ fa.task.filterTagsHint }}</p>
+          <div class="mt-2 flex flex-wrap gap-2" role="group" aria-labelledby="tasks-tags-label">
+            <button
+              v-for="tag in catalog.tags"
+              :key="tag.id"
+              type="button"
+              class="min-h-11 rounded-full border border-line px-3 text-sm"
+              :class="view.tagIds.includes(tag.id) ? 'border-accent bg-accent-soft text-accent' : 'bg-canvas text-muted'"
+              :aria-pressed="view.tagIds.includes(tag.id)"
+              @click="view.toggleTag(tag.id)"
+            >
+              {{ tag.name }}
+            </button>
+          </div>
+        </div>
+
+        <div>
+          <p class="text-sm font-medium text-ink">{{ fa.task.bulkActions }}</p>
+          <div class="mt-2 flex flex-wrap gap-2">
+            <button type="button" class="min-h-11 rounded-xl bg-surface-muted px-3 text-sm" @click="selecting = !selecting">
+              {{ fa.task.select }}
+            </button>
+            <button
+              v-if="selecting"
+              type="button"
+              class="min-h-11 rounded-xl bg-surface-muted px-3 text-sm"
+              :disabled="selected.length === 0"
+              @click="completeSelected"
+            >
+              {{ fa.task.completeSelected }}
+            </button>
+            <button
+              v-if="selecting"
+              type="button"
+              class="min-h-11 rounded-xl bg-danger-soft px-3 text-sm text-danger"
+              :disabled="selected.length === 0"
+              @click="removeSelected"
+            >
+              {{ fa.task.deleteSelected }}
+            </button>
+          </div>
+        </div>
       </div>
       <EmptyState v-if="visible.length === 0" :title="fa.empty.tasksTitle" :description="fa.empty.tasksBody" />
       <TaskStack v-else :tasks="visible" :reorder="view.sort === 'manual'" :selectable="selecting" :selected-ids="selected" @select="toggle" />
