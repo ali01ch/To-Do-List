@@ -179,6 +179,7 @@ export const fa = {
     createList: 'ساخت فهرست',
     openList: 'دیدن کارها',
     back: 'بازگشت',
+    backToLists: 'بازگشت به فهرست‌ها',
     range: 'بازه',
     week: '۷ روز',
     month: '۳۰ روز',

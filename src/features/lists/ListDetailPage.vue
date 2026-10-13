@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { ChevronRight } from '@lucide/vue'
 import { computed } from 'vue'
 import { RouterLink, useRoute, useRouter } from 'vue-router'
 import EmptyState from '@/components/EmptyState.vue'
@@ -28,12 +29,20 @@ async function remove(): Promise<void> {
 
 <template>
   <section>
-    <RouterLink :to="{ name: 'lists' }" class="text-sm text-muted">{{ fa.task.back }}</RouterLink>
-    <p v-if="catalog.status === 'loading'" class="mt-6 text-sm text-muted">{{ fa.empty.loading }}</p>
+    <RouterLink
+      :to="{ name: 'lists' }"
+      class="-ms-2 mb-3 inline-flex min-h-11 items-center gap-1.5 rounded-xl px-2 text-sm font-medium text-accent transition-colors hover:bg-accent-soft"
+    >
+      <ChevronRight :size="20" :stroke-width="2" aria-hidden="true" />
+      {{ fa.task.backToLists }}
+    </RouterLink>
+    <p v-if="catalog.status === 'loading'" class="mt-4 text-sm text-muted">{{ fa.empty.loading }}</p>
     <EmptyState v-else-if="!list" :title="fa.empty.missingList" />
     <template v-else>
-      <PageHeader :title="list.name" :description="list.archivedAt ? fa.task.archived : fa.sections.lists.description" />
-      <span class="mt-3 inline-block size-3 rounded-full" :class="listColorClass[list.color]" />
+      <div class="flex items-start gap-3">
+        <span class="mt-2 size-3 shrink-0 rounded-full" :class="listColorClass[list.color]" aria-hidden="true" />
+        <PageHeader :title="list.name" :description="list.archivedAt ? fa.task.archived : fa.sections.lists.description" />
+      </div>
       <div class="mt-4 flex flex-wrap gap-2">
         <button type="button" class="min-h-11 rounded-xl bg-surface-muted px-3 text-sm" @click="catalog.setListArchived(list.id, list.archivedAt === null)">
           {{ list.archivedAt ? fa.task.unarchive : fa.task.archive }}
