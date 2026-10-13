@@ -4,7 +4,7 @@ import {
   CircleCheck,
   Ellipsis,
   Folders,
-  Inbox,
+  Lightbulb,
   ListChecks,
   ListTodo,
   Settings,
@@ -21,7 +21,7 @@ export interface NavItem {
 
 export const primaryNav: NavItem[] = [
   { name: 'work', label: fa.nav.work, icon: ListChecks },
-  { name: 'inbox', label: fa.nav.inbox, icon: Inbox },
+  { name: 'inbox', label: fa.nav.inbox, icon: Lightbulb },
   { name: 'calendar', label: fa.nav.calendar, icon: CalendarRange },
   { name: 'focus', label: fa.nav.focus, icon: Timer },
 ]
