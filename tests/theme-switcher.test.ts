@@ -1,9 +1,11 @@
 /**
  * @vitest-environment jsdom
  */
+import { createPinia, setActivePinia } from 'pinia'
 import { mount } from '@vue/test-utils'
-import { afterEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import ThemeSwitcher from '@/components/ThemeSwitcher.vue'
+import { useAppStore } from '@/stores/appStore'
 
 const options = [
   { value: 'system' as const, label: 'دستگاه' },
@@ -12,8 +14,14 @@ const options = [
 ]
 
 describe('ThemeSwitcher', () => {
+  beforeEach(() => {
+    setActivePinia(createPinia())
+    document.documentElement.classList.remove('palette-rose', 'dark')
+  })
+
   afterEach(() => {
     vi.useRealTimers()
+    document.documentElement.classList.remove('palette-rose', 'dark')
   })
 
   it('shows the Persian choices and emits the selected theme', async () => {
@@ -33,6 +41,7 @@ describe('ThemeSwitcher', () => {
 
   it('toggles the hidden palette after holding the device option for five seconds', async () => {
     vi.useFakeTimers()
+    const store = useAppStore()
     const wrapper = mount(ThemeSwitcher, {
       props: {
         modelValue: 'system',
@@ -42,18 +51,21 @@ describe('ThemeSwitcher', () => {
     })
 
     const device = wrapper.get('label')
-    await device.trigger('pointerdown', { pointerType: 'touch' })
-    expect(wrapper.emitted('toggle-palette')).toBeUndefined()
+    await device.trigger('pointerdown', { pointerType: 'touch', pointerId: 1 })
+    expect(store.palette).toBe('green')
+    expect(document.documentElement.classList.contains('palette-rose')).toBe(false)
 
     await vi.advanceTimersByTimeAsync(4999)
-    expect(wrapper.emitted('toggle-palette')).toBeUndefined()
+    expect(store.palette).toBe('green')
 
     await vi.advanceTimersByTimeAsync(1)
-    expect(wrapper.emitted('toggle-palette')).toHaveLength(1)
+    expect(store.palette).toBe('rose')
+    expect(document.documentElement.classList.contains('palette-rose')).toBe(true)
   })
 
   it('cancels the hidden palette gesture when the hold ends early', async () => {
     vi.useFakeTimers()
+    const store = useAppStore()
     const wrapper = mount(ThemeSwitcher, {
       props: {
         modelValue: 'system',
@@ -63,10 +75,11 @@ describe('ThemeSwitcher', () => {
     })
 
     const device = wrapper.get('label')
-    await device.trigger('pointerdown', { pointerType: 'touch' })
+    await device.trigger('pointerdown', { pointerType: 'touch', pointerId: 1 })
     await vi.advanceTimersByTimeAsync(2000)
-    await device.trigger('pointerup')
+    await device.trigger('pointerup', { pointerType: 'touch', pointerId: 1 })
     await vi.advanceTimersByTimeAsync(5000)
-    expect(wrapper.emitted('toggle-palette')).toBeUndefined()
+    expect(store.palette).toBe('green')
+    expect(document.documentElement.classList.contains('palette-rose')).toBe(false)
   })
 })

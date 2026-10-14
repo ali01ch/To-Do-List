@@ -1,9 +1,10 @@
 <script setup lang="ts">
 import { Monitor, Moon, Sun } from '@lucide/vue'
 import { onBeforeUnmount, type Component } from 'vue'
+import { useAppStore } from '@/stores/appStore'
 import { isThemePreference, type ThemePreference } from '@/utils/theme'
 
-defineProps<{
+const props = defineProps<{
   modelValue: ThemePreference
   legend: string
   options: { value: ThemePreference; label: string }[]
@@ -11,8 +12,9 @@ defineProps<{
 
 const emit = defineEmits<{
   'update:modelValue': [value: ThemePreference]
-  'toggle-palette': []
 }>()
+
+const store = useAppStore()
 
 const icons: Record<ThemePreference, Component> = {
   light: Sun,
@@ -22,28 +24,34 @@ const icons: Record<ThemePreference, Component> = {
 
 const SECRET_HOLD_MS = 5000
 let holdTimer: ReturnType<typeof setTimeout> | null = null
+let holdPointerId: number | null = null
 
-function clearHold(): void {
+function clearHoldTimer(): void {
   if (holdTimer === null) return
   clearTimeout(holdTimer)
   holdTimer = null
 }
 
-function onPointerDown(value: ThemePreference, event: PointerEvent): void {
-  if (value !== 'system') return
+function cancelHold(pointerId?: number): void {
+  if (pointerId !== undefined && holdPointerId !== null && pointerId !== holdPointerId) return
+  holdPointerId = null
+  clearHoldTimer()
+}
+
+function onSystemPointerDown(event: PointerEvent): void {
   if (event.pointerType === 'mouse' && event.button !== 0) return
-  clearHold()
-  const target = event.currentTarget
-  if (target instanceof HTMLElement && typeof target.setPointerCapture === 'function') {
-    try {
-      target.setPointerCapture(event.pointerId)
-    } catch {
-      // Capture is best-effort; the hold still works without it.
-    }
-  }
+
+  // Prevent the browser long-press menu from aborting the gesture on touch.
+  if (event.pointerType !== 'mouse') event.preventDefault()
+
+  if (props.modelValue !== 'system') emit('update:modelValue', 'system')
+
+  holdPointerId = event.pointerId
+  clearHoldTimer()
   holdTimer = setTimeout(() => {
     holdTimer = null
-    emit('toggle-palette')
+    holdPointerId = null
+    void store.togglePalette()
     try {
       navigator.vibrate?.(40)
     } catch {
@@ -52,13 +60,19 @@ function onPointerDown(value: ThemePreference, event: PointerEvent): void {
   }, SECRET_HOLD_MS)
 }
 
+function onSystemPointerUp(event: PointerEvent): void {
+  cancelHold(event.pointerId)
+}
+
 function onChange(event: Event): void {
   const value = (event.target as HTMLInputElement).value
   if (!isThemePreference(value)) return
   emit('update:modelValue', value)
 }
 
-onBeforeUnmount(clearHold)
+onBeforeUnmount(() => {
+  cancelHold()
+})
 </script>
 
 <template>
@@ -69,10 +83,9 @@ onBeforeUnmount(clearHold)
         v-for="option in options"
         :key="option.value"
         class="flex min-h-11 cursor-pointer items-center justify-center gap-2 rounded-xl border border-line bg-surface px-2 text-sm text-muted select-none has-[:checked]:border-accent has-[:checked]:bg-accent-soft has-[:checked]:text-accent"
-        @pointerdown="onPointerDown(option.value, $event)"
-        @pointerup="clearHold"
-        @pointerleave="clearHold"
-        @pointercancel="clearHold"
+        :class="option.value === 'system' ? 'touch-none [-webkit-touch-callout:none]' : ''"
+        @pointerdown="option.value === 'system' ? onSystemPointerDown($event) : undefined"
+        @pointerup="option.value === 'system' ? onSystemPointerUp($event) : undefined"
         @contextmenu.prevent
       >
         <input
