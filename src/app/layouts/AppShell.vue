@@ -10,6 +10,7 @@ import ConfirmDialog from '@/components/ConfirmDialog.vue'
 import InstallBanner from '@/components/InstallBanner.vue'
 import PwaUpdateBanner from '@/components/PwaUpdateBanner.vue'
 import TaskSheet from '@/components/TaskSheet.vue'
+import { checkForAppUpdate } from '@/composables/usePwaUpdate'
 import { usePullToRefresh } from '@/composables/usePullToRefresh'
 import { errorText, fa } from '@/locales/fa'
 import { useAppStore } from '@/stores/appStore'
@@ -40,6 +41,8 @@ const showFab = computed(
 
 async function refreshApp(): Promise<void> {
   await catalog.load()
+  const update = await checkForAppUpdate()
+  if (update === 'reloading') return
   catalog.showNotice(fa.refreshed)
 }
 

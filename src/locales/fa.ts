@@ -284,7 +284,7 @@ export const fa = {
     action: 'نصب اپ',
     later: 'بعداً',
     updateTitle: 'نسخه تازه آماده است',
-    updateBody: 'برای اعمال نسخه جدید، صفحه را تازه کنید.',
+    updateBody: 'نسخه جدید از سرور آمده است. با زدن دکمه، اپ بروزرسانی می‌شود.',
     updateAction: 'به‌روزرسانی',
   },
   errors: {

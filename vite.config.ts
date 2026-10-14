@@ -13,7 +13,9 @@ export default defineConfig({
     vue(),
     tailwindcss(),
     VitePWA({
-      registerType: 'prompt',
+      // Activate new SW without waiting for a manual prompt; refresh still
+      // needed once to claim clients — pull-to-refresh / focus check handles that.
+      registerType: 'autoUpdate',
       includeAssets: ['favicon.svg', 'icons/apple-touch-icon.png'],
       manifest: {
         id: base,
@@ -52,6 +54,8 @@ export default defineConfig({
         navigateFallback: 'index.html',
         globPatterns: ['**/*.{js,css,html,ico,svg,png,woff2,woff}'],
         cleanupOutdatedCaches: true,
+        clientsClaim: true,
+        skipWaiting: true,
       },
       devOptions: {
         enabled: false,
