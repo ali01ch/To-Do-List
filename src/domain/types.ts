@@ -144,6 +144,7 @@ export interface NewFocusSession {
 
 export const SETTING_KEYS = {
   theme: 'theme',
+  colorPalette: 'colorPalette',
   focusTimerStyle: 'focusTimerStyle',
 } as const
 

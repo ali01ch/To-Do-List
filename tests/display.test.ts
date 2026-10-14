@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { formatBytes } from '@/utils/bytes'
 import { normalizeDigits, toPersianDigits } from '@/utils/digits'
-import { resolveTheme } from '@/utils/theme'
+import { isColorPalette, resolveTheme } from '@/utils/theme'
 
 describe('digits and display', () => {
   it('normalizes Persian and Arabic-Indic digits', () => {
@@ -17,5 +17,11 @@ describe('digits and display', () => {
   it('resolves the system theme from the device preference', () => {
     expect(resolveTheme('system', true)).toBe('dark')
     expect(resolveTheme('light', true)).toBe('light')
+  })
+
+  it('accepts the green and rose color palettes', () => {
+    expect(isColorPalette('green')).toBe(true)
+    expect(isColorPalette('rose')).toBe(true)
+    expect(isColorPalette('pink')).toBe(false)
   })
 })

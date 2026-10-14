@@ -16,13 +16,19 @@
     <script>
       try {
         var stored = localStorage.getItem('rozno-theme')
+        var palette = localStorage.getItem('rozno-palette')
         var dark =
           stored === 'dark' ||
           (stored !== 'light' && matchMedia('(prefers-color-scheme: dark)').matches)
         if (dark) document.documentElement.classList.add('dark')
+        if (palette === 'rose') document.documentElement.classList.add('palette-rose')
         document.documentElement.style.colorScheme = dark ? 'dark' : 'light'
         var themeMeta = document.querySelector('meta[name="theme-color"]')
-        if (themeMeta) themeMeta.setAttribute('content', dark ? '#0c1511' : '#1a7a4c')
+        if (themeMeta) {
+          var lightColor = palette === 'rose' ? '#c45c7a' : '#1a7a4c'
+          var darkColor = palette === 'rose' ? '#160f12' : '#0c1511'
+          themeMeta.setAttribute('content', dark ? darkColor : lightColor)
+        }
       } catch (error) {
         /* Appearance falls back to the light theme if storage is blocked. */
       }

@@ -53,6 +53,10 @@ function onTheme(value: ThemePreference): void {
   void store.setTheme(value)
 }
 
+function onTogglePalette(): void {
+  void store.togglePalette()
+}
+
 async function onExport(): Promise<void> {
   busy.value = true
   message.value = null
@@ -136,6 +140,7 @@ async function onClear(): Promise<void> {
         :legend="fa.settings.theme"
         :options="themeOptions"
         @update:model-value="onTheme"
+        @toggle-palette="onTogglePalette"
       />
       <p class="mt-3 text-xs leading-6 text-muted">{{ fa.settings.themeHint }}</p>
     </article>

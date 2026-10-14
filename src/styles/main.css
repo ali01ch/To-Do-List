@@ -43,6 +43,38 @@
   color-scheme: dark;
 }
 
+:root.palette-rose {
+  --canvas: #fdf2f5;
+  --surface: #fff8fb;
+  --surface-muted: #f5e4ea;
+  --ink: #2a1520;
+  --muted: #8a6575;
+  --line: #e8cfd8;
+  --accent: #c45c7a;
+  --accent-soft: #f8dce5;
+  --accent-ink: #fff7fa;
+  --danger: #9b4040;
+  --danger-soft: #f6e8e8;
+  --overdue: #a67a3a;
+  --shadow: 0 1px 2px rgb(42 21 32 / 0.05), 0 12px 32px rgb(196 92 122 / 0.1);
+}
+
+:root.palette-rose.dark {
+  --canvas: #160f12;
+  --surface: #21161b;
+  --surface-muted: #2c1e24;
+  --ink: #f5e8ed;
+  --muted: #b894a0;
+  --line: #3d2a32;
+  --accent: #e89bb0;
+  --accent-soft: #3a222c;
+  --accent-ink: #1a0e12;
+  --danger: #f0b4b4;
+  --danger-soft: #3a2424;
+  --overdue: #d4b56a;
+  --shadow: 0 1px 2px rgb(0 0 0 / 0.3), 0 16px 36px rgb(0 0 0 / 0.34);
+}
+
 @theme inline {
   --font-sans: "Vazirmatn", ui-sans-serif, system-ui, sans-serif;
   --color-canvas: var(--canvas);
@@ -91,6 +123,20 @@
     background:
       radial-gradient(120% 80% at 100% 0%, rgb(111 207 154 / 0.08), transparent 55%),
       radial-gradient(90% 60% at 0% 100%, rgb(26 122 76 / 0.12), transparent 50%),
+      var(--canvas);
+  }
+
+  :root.palette-rose body {
+    background:
+      radial-gradient(120% 80% at 100% 0%, rgb(196 92 122 / 0.1), transparent 55%),
+      radial-gradient(90% 60% at 0% 100%, rgb(232 155 176 / 0.08), transparent 50%),
+      var(--canvas);
+  }
+
+  :root.palette-rose.dark body {
+    background:
+      radial-gradient(120% 80% at 100% 0%, rgb(232 155 176 / 0.1), transparent 55%),
+      radial-gradient(90% 60% at 0% 100%, rgb(196 92 122 / 0.12), transparent 50%),
       var(--canvas);
   }
 
