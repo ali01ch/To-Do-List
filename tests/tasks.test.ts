@@ -99,6 +99,8 @@ describe('database errors', () => {
       'appSettings',
       'focusSessions',
       'lists',
+      'projectTasks',
+      'projects',
       'tags',
       'taskTags',
       'tasks',

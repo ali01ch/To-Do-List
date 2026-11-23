@@ -15,6 +15,8 @@ export const useViewStore = defineStore('views', () => {
   const calendarDueOn = ref<string | null>(null)
   const showArchivedLists = ref(false)
   const includeCompletedInList = ref(false)
+  const showArchivedProjects = ref(false)
+  const includeCompletedInProject = ref(false)
 
   function toggleTag(tagId: string): void {
     tagIds.value = tagIds.value.includes(tagId) ? tagIds.value.filter((id) => id !== tagId) : [...tagIds.value, tagId]
@@ -32,6 +34,8 @@ export const useViewStore = defineStore('views', () => {
     calendarDueOn,
     showArchivedLists,
     includeCompletedInList,
+    showArchivedProjects,
+    includeCompletedInProject,
     toggleTag,
   }
 })

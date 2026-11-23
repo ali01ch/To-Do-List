@@ -3,6 +3,7 @@ import {
   ChartColumn,
   CircleCheck,
   Ellipsis,
+  FolderKanban,
   Folders,
   Lightbulb,
   ListChecks,
@@ -32,6 +33,7 @@ export const libraryNav: NavItem[] = [
   { name: 'tasks', label: fa.nav.tasks, icon: ListTodo },
   { name: 'completed', label: fa.nav.completed, icon: CircleCheck },
   { name: 'lists', label: fa.nav.lists, icon: Folders },
+  { name: 'projects', label: fa.nav.projects, icon: FolderKanban },
   { name: 'stats', label: fa.nav.stats, icon: ChartColumn },
   { name: 'settings', label: fa.nav.settings, icon: Settings },
 ]

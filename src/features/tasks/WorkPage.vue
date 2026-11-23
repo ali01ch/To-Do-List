@@ -1,14 +1,17 @@
 <script setup lang="ts">
-import { ChevronDown } from '@lucide/vue'
+import { ChevronDown, FolderKanban } from '@lucide/vue'
 import { computed, ref } from 'vue'
+import { RouterLink } from 'vue-router'
 import type { Priority } from '@/domain/types'
 import { PRIORITIES } from '@/domain/types'
 import EmptyState from '@/components/EmptyState.vue'
 import PageHeader from '@/components/PageHeader.vue'
 import QuickAdd from '@/components/QuickAdd.vue'
 import TaskStack from '@/components/TaskStack.vue'
+import { listColorClass } from '@/features/lists/listStyle'
 import { fa } from '@/locales/fa'
 import { formatDuePhrase } from '@/services/duePhrase'
+import { progressForProject } from '@/services/projectQuery'
 import { groupByDueOn, inboxTasks, todayBuckets, upcomingTasks } from '@/services/taskQuery'
 import { useCatalogStore } from '@/stores/catalogStore'
 import { addDays, todayDueOn } from '@/utils/dates'
@@ -110,6 +113,12 @@ const filterSummary = computed(() => {
   if (activeFilterCount.value === 0) return fa.task.filtersShow
   return `${toPersianDigits(activeFilterCount.value)} ${fa.task.filtersActive}`
 })
+
+const activeProjectShortcuts = computed(() => catalog.projects.filter((project) => project.archivedAt === null))
+
+function projectProgress(projectId: string) {
+  return progressForProject(catalog.projectTasks, projectId)
+}
 </script>
 
 <template>
@@ -117,6 +126,50 @@ const filterSummary = computed(() => {
     <PageHeader :title="fa.sections.work.title" :description="fa.sections.work.description" />
     <p v-if="catalog.status === 'loading'" class="mt-6 text-sm text-muted">{{ fa.empty.loading }}</p>
     <template v-else>
+      <nav
+        class="mt-4 flex h-11 items-stretch gap-1 overflow-hidden rounded-2xl border border-line bg-surface ps-2.5 pe-1"
+        :aria-label="fa.nav.projects"
+      >
+        <span class="flex shrink-0 items-center gap-1.5 border-e border-line pe-2.5 text-xs font-medium text-ink">
+          <FolderKanban :size="15" :stroke-width="1.75" class="text-accent" aria-hidden="true" />
+          <span class="hidden min-[380px]:inline">{{ fa.nav.projects }}</span>
+        </span>
+        <div class="min-w-0 flex-1 overflow-x-auto overscroll-x-contain [scrollbar-width:thin]">
+          <ul class="flex h-full min-w-min items-center gap-1.5 px-1.5">
+            <li v-if="activeProjectShortcuts.length === 0">
+              <RouterLink
+                :to="{ name: 'projects' }"
+                class="inline-flex h-8 items-center rounded-full border border-dashed border-line px-3 text-xs text-muted transition-colors hover:border-accent/50 hover:bg-accent-soft hover:text-ink"
+              >
+                {{ fa.project.create }}
+              </RouterLink>
+            </li>
+            <li v-for="project in activeProjectShortcuts" :key="project.id" class="shrink-0">
+              <RouterLink
+                :to="{ name: 'project', params: { id: project.id } }"
+                class="inline-flex h-8 max-w-[10.5rem] items-center gap-1.5 rounded-full border border-line bg-canvas px-2.5 text-xs font-medium transition-colors hover:border-accent/35 hover:bg-accent-soft/50"
+                :title="project.name"
+              >
+                <span class="size-2 shrink-0 rounded-full" :class="listColorClass[project.color]" aria-hidden="true" />
+                <span class="truncate">{{ project.name }}</span>
+                <span
+                  v-if="projectProgress(project.id).total > 0"
+                  class="shrink-0 text-[0.65rem] font-normal text-muted"
+                >
+                  {{ toPersianDigits(projectProgress(project.id).percent) }}٪
+                </span>
+              </RouterLink>
+            </li>
+          </ul>
+        </div>
+        <RouterLink
+          :to="{ name: 'projects' }"
+          class="flex shrink-0 items-center self-center rounded-lg px-2.5 text-xs font-medium text-accent transition-colors hover:bg-accent-soft"
+        >
+          {{ fa.project.viewAll }}
+        </RouterLink>
+      </nav>
+
       <QuickAdd :preset="addPreset" :show-due-choices="false" />
 
       <div class="mt-5 overflow-hidden rounded-2xl border border-line bg-surface">

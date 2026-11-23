@@ -4,6 +4,8 @@ import CalendarPage from '@/features/calendar/CalendarPage.vue'
 import FocusPage from '@/features/focus/FocusPage.vue'
 import ListDetailPage from '@/features/lists/ListDetailPage.vue'
 import ListsPage from '@/features/lists/ListsPage.vue'
+import ProjectDetailPage from '@/features/projects/ProjectDetailPage.vue'
+import ProjectsPage from '@/features/projects/ProjectsPage.vue'
 import SettingsPage from '@/features/settings/SettingsPage.vue'
 import MorePage from '@/features/shell/MorePage.vue'
 import StatsPage from '@/features/statistics/StatsPage.vue'
@@ -44,6 +46,8 @@ export const router = createRouter({
         page('completed', 'completed', CompletedPage, fa.sections.completed),
         page('lists', 'lists', ListsPage, fa.sections.lists),
         page('lists/:id', 'list', ListDetailPage, fa.sections.lists),
+        page('projects', 'projects', ProjectsPage, fa.sections.projects),
+        page('projects/:id', 'project', ProjectDetailPage, fa.sections.projects),
         page('focus', 'focus', FocusPage, fa.sections.focus),
         page('stats', 'stats', StatsPage, fa.sections.stats),
         {

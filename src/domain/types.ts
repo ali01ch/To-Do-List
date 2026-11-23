@@ -49,6 +49,32 @@ export interface TaskList {
   updatedAt: string
 }
 
+export interface Project {
+  id: string
+  name: string
+  description: string
+  color: ListColor
+  icon: ListIcon
+  /** Local calendar date, YYYY-MM-DD. Optional project target/deadline. */
+  targetOn: string | null
+  sortOrder: number
+  archivedAt: string | null
+  createdAt: string
+  updatedAt: string
+}
+
+export interface ProjectTask {
+  id: string
+  projectId: string
+  title: string
+  description: string
+  completedAt: string | null
+  sortOrder: number
+  createdAt: string
+  updatedAt: string
+  deletedAt: string | null
+}
+
 export interface Tag {
   id: string
   name: string
@@ -125,6 +151,26 @@ export interface NewTaskList {
 }
 
 export type TaskListPatch = Partial<Pick<TaskList, 'name' | 'color' | 'icon' | 'sortOrder'>>
+
+export interface NewProject {
+  name: string
+  description?: string
+  color?: ListColor
+  icon?: ListIcon
+  targetOn?: string | null
+  sortOrder?: number
+}
+
+export type ProjectPatch = Partial<Pick<Project, 'name' | 'description' | 'color' | 'icon' | 'targetOn' | 'sortOrder'>>
+
+export interface NewProjectTask {
+  projectId: string
+  title: string
+  description?: string
+  sortOrder?: number
+}
+
+export type ProjectTaskPatch = Partial<Pick<ProjectTask, 'title' | 'description' | 'sortOrder'>>
 
 export interface NewTag {
   name: string

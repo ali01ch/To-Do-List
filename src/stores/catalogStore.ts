@@ -1,9 +1,30 @@
 import { defineStore } from 'pinia'
 import { computed, ref } from 'vue'
 import { toDataError, type DataErrorCode } from '@/domain/errors'
-import type { FocusSession, NewTask, NewTaskList, Tag, Task, TaskList, TaskPatch, TaskTag } from '@/domain/types'
+import type {
+  FocusSession,
+  NewProject,
+  NewProjectTask,
+  NewTask,
+  NewTaskList,
+  Project,
+  ProjectTask,
+  ProjectTaskPatch,
+  Tag,
+  Task,
+  TaskList,
+  TaskPatch,
+  TaskTag,
+} from '@/domain/types'
 import { fa } from '@/locales/fa'
-import { focusRepository, listRepository, tagRepository, taskRepository } from '@/repositories/container'
+import {
+  focusRepository,
+  listRepository,
+  projectRepository,
+  projectTaskRepository,
+  tagRepository,
+  taskRepository,
+} from '@/repositories/container'
 import { nextWeeklyDueOn } from '@/services/recurrence'
 import { nowIso } from '@/utils/dates'
 import { toPersianDigits } from '@/utils/digits'
@@ -16,11 +37,15 @@ export interface CreatePreset {
 
 export type EditorState = { mode: 'create'; title: string; dueOn: string | null; listId: string | null } | { mode: 'edit'; taskId: string }
 
+export type ProjectTaskEditorState = { mode: 'edit'; taskId: string }
+
 export type PendingDelete =
   | { kind: 'task'; id: string; label: string }
   | { kind: 'tasks'; ids: string[]; count: number }
   | { kind: 'list'; id: string; label: string }
   | { kind: 'tag'; id: string; label: string }
+  | { kind: 'project'; id: string; label: string }
+  | { kind: 'projectTask'; id: string; label: string }
 
 interface UndoEntry {
   message: string
@@ -33,12 +58,15 @@ export const UNDO_DURATION_MS = 3500
 export const useCatalogStore = defineStore('catalog', () => {
   const tasks = ref<Task[]>([])
   const lists = ref<TaskList[]>([])
+  const projects = ref<Project[]>([])
+  const projectTasks = ref<ProjectTask[]>([])
   const tags = ref<Tag[]>([])
   const links = ref<TaskTag[]>([])
   const sessions = ref<FocusSession[]>([])
   const status = ref<'idle' | 'loading' | 'ready' | 'error'>('idle')
   const actionError = ref<DataErrorCode | null>(null)
   const editor = ref<EditorState | null>(null)
+  const projectTaskEditor = ref<ProjectTaskEditorState | null>(null)
   const undoEntry = ref<UndoEntry | null>(null)
   const notice = ref<string | null>(null)
   const pendingDelete = ref<PendingDelete | null>(null)
@@ -69,6 +97,18 @@ export const useCatalogStore = defineStore('catalog', () => {
         body: fa.task.confirmListBody,
       }
     }
+    if (pending.kind === 'project') {
+      return {
+        title: fa.project.confirmNamed.replace('{title}', pending.label),
+        body: fa.project.confirmBody,
+      }
+    }
+    if (pending.kind === 'projectTask') {
+      return {
+        title: fa.project.confirmTaskNamed.replace('{title}', pending.label),
+        body: fa.project.confirmTaskBody,
+      }
+    }
     return {
       title: fa.task.confirmTagNamed.replace('{title}', pending.label),
       body: fa.task.confirmTagBody,
@@ -91,6 +131,12 @@ export const useCatalogStore = defineStore('catalog', () => {
     const index = tasks.value.findIndex((item) => item.id === task.id)
     if (index === -1) tasks.value.push(task)
     else tasks.value.splice(index, 1, task)
+  }
+
+  function replaceProjectTask(task: ProjectTask): void {
+    const index = projectTasks.value.findIndex((item) => item.id === task.id)
+    if (index === -1) projectTasks.value.push(task)
+    else projectTasks.value.splice(index, 1, task)
   }
 
   function showNotice(message: string): void {
@@ -129,15 +175,19 @@ export const useCatalogStore = defineStore('catalog', () => {
     status.value = 'loading'
     actionError.value = null
     try {
-      const [taskRows, listRows, tagRows, linkRows, sessionRows] = await Promise.all([
+      const [taskRows, listRows, projectRows, projectTaskRows, tagRows, linkRows, sessionRows] = await Promise.all([
         taskRepository.list(),
         listRepository.list(),
+        projectRepository.list(),
+        projectTaskRepository.list(),
         tagRepository.list(),
         taskRepository.listLinks(),
         focusRepository.list(),
       ])
       tasks.value = taskRows
       lists.value = listRows
+      projects.value = projectRows
+      projectTasks.value = projectTaskRows
       tags.value = tagRows
       links.value = linkRows
       sessions.value = sessionRows
@@ -269,6 +319,8 @@ export const useCatalogStore = defineStore('catalog', () => {
       if (pending.kind === 'task') await removeTask(pending.id)
       else if (pending.kind === 'tasks') await removeTasks(pending.ids)
       else if (pending.kind === 'list') await removeList(pending.id)
+      else if (pending.kind === 'project') await removeProject(pending.id)
+      else if (pending.kind === 'projectTask') await removeProjectTask(pending.id)
       else await removeTag(pending.id)
       pendingDelete.value = null
       resolvePendingDelete = null
@@ -437,6 +489,128 @@ export const useCatalogStore = defineStore('catalog', () => {
     }
   }
 
+  async function createProject(input: NewProject): Promise<Project | undefined> {
+    actionError.value = null
+    try {
+      const project = await projectRepository.create(input)
+      projects.value.push(project)
+      projects.value.sort((left, right) => left.sortOrder - right.sortOrder)
+      showNotice(fa.project.created)
+      return project
+    } catch (error) {
+      actionError.value = toDataError(error).code
+      return undefined
+    }
+  }
+
+  async function updateProject(id: string, patch: Partial<Pick<Project, 'name' | 'description' | 'color' | 'icon' | 'targetOn'>>): Promise<void> {
+    actionError.value = null
+    try {
+      const project = await projectRepository.update(id, patch)
+      const index = projects.value.findIndex((item) => item.id === id)
+      if (index >= 0) projects.value.splice(index, 1, project)
+    } catch (error) {
+      actionError.value = toDataError(error).code
+    }
+  }
+
+  async function setProjectArchived(id: string, archived: boolean): Promise<void> {
+    actionError.value = null
+    try {
+      const project = await projectRepository.setArchived(id, archived)
+      const index = projects.value.findIndex((item) => item.id === id)
+      if (index >= 0) projects.value.splice(index, 1, project)
+    } catch (error) {
+      actionError.value = toDataError(error).code
+    }
+  }
+
+  async function requestRemoveProject(id: string): Promise<boolean> {
+    const project = projects.value.find((item) => item.id === id)
+    if (!project) return false
+    return askDelete({ kind: 'project', id, label: project.name })
+  }
+
+  async function removeProject(id: string): Promise<void> {
+    actionError.value = null
+    try {
+      await projectRepository.remove(id)
+      projects.value = projects.value.filter((project) => project.id !== id)
+      projectTasks.value = projectTasks.value.filter((task) => task.projectId !== id)
+    } catch (error) {
+      actionError.value = toDataError(error).code
+    }
+  }
+
+  async function createProjectTask(input: NewProjectTask): Promise<ProjectTask | undefined> {
+    actionError.value = null
+    try {
+      const task = await projectTaskRepository.create(input)
+      replaceProjectTask(task)
+      showNotice(fa.project.taskAdded)
+      return task
+    } catch (error) {
+      actionError.value = toDataError(error).code
+      return undefined
+    }
+  }
+
+  async function updateProjectTask(id: string, patch: ProjectTaskPatch): Promise<void> {
+    actionError.value = null
+    try {
+      replaceProjectTask(await projectTaskRepository.update(id, patch))
+    } catch (error) {
+      actionError.value = toDataError(error).code
+    }
+  }
+
+  async function toggleProjectTaskComplete(id: string): Promise<void> {
+    const task = projectTasks.value.find((item) => item.id === id)
+    if (!task) return
+    const previous = task.completedAt
+    task.completedAt = previous ? null : nowIso()
+    try {
+      const saved = previous ? await projectTaskRepository.uncomplete(id) : await projectTaskRepository.complete(id)
+      replaceProjectTask(saved)
+    } catch (error) {
+      task.completedAt = previous
+      actionError.value = toDataError(error).code
+    }
+  }
+
+  function openProjectTaskEdit(taskId: string): void {
+    projectTaskEditor.value = { mode: 'edit', taskId }
+  }
+
+  function closeProjectTaskEditor(): void {
+    projectTaskEditor.value = null
+  }
+
+  async function requestRemoveProjectTask(id: string): Promise<boolean> {
+    const task = projectTasks.value.find((item) => item.id === id)
+    if (!task) return false
+    return askDelete({ kind: 'projectTask', id, label: task.title })
+  }
+
+  async function removeProjectTask(id: string): Promise<void> {
+    const task = projectTasks.value.find((item) => item.id === id)
+    if (!task) return
+    actionError.value = null
+    try {
+      await projectTaskRepository.softDelete(id)
+      projectTasks.value = projectTasks.value.filter((item) => item.id !== id)
+      if (projectTaskEditor.value?.taskId === id) projectTaskEditor.value = null
+      showUndo({
+        message: `«${task.title}» حذف شد`,
+        undo: async () => {
+          replaceProjectTask(await projectTaskRepository.restore(id))
+        },
+      })
+    } catch (error) {
+      actionError.value = toDataError(error).code
+    }
+  }
+
   async function createTag(name: string): Promise<Tag | undefined> {
     actionError.value = null
     try {
@@ -468,12 +642,15 @@ export const useCatalogStore = defineStore('catalog', () => {
   return {
     tasks,
     lists,
+    projects,
+    projectTasks,
     tags,
     links,
     sessions,
     status,
     actionError,
     editor,
+    projectTaskEditor,
     undoEntry,
     notice,
     pendingDelete,
@@ -500,6 +677,16 @@ export const useCatalogStore = defineStore('catalog', () => {
     createList,
     updateList,
     setListArchived,
+    createProject,
+    updateProject,
+    setProjectArchived,
+    requestRemoveProject,
+    createProjectTask,
+    updateProjectTask,
+    toggleProjectTaskComplete,
+    openProjectTaskEdit,
+    closeProjectTaskEditor,
+    requestRemoveProjectTask,
     createTag,
     rememberSession,
     undo,

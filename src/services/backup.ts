@@ -1,7 +1,7 @@
 import { APP_VERSION, SCHEMA_VERSION } from '@/app/version'
 import { db, type RoznoDatabase } from '@/db/database'
 import { DataError, toDataError } from '@/domain/errors'
-import type { AppSetting, FocusSession, Tag, Task, TaskList, TaskTag } from '@/domain/types'
+import type { AppSetting, FocusSession, Project, ProjectTask, Tag, Task, TaskList, TaskTag } from '@/domain/types'
 
 export const BACKUP_FORMAT = 'rozno-backup' as const
 
@@ -17,6 +17,8 @@ export interface RoznoBackup {
     taskTags: TaskTag[]
     focusSessions: FocusSession[]
     appSettings: AppSetting[]
+    projects: Project[]
+    projectTasks: ProjectTask[]
   }
 }
 
@@ -26,6 +28,8 @@ export interface BackupSummary {
   tags: number
   focusSessions: number
   settings: number
+  projects: number
+  projectTasks: number
   exportedAt: string
   schemaVersion: number
 }
@@ -36,20 +40,22 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 
 export async function exportBackup(database: RoznoDatabase = db): Promise<RoznoBackup> {
   try {
-    const [tasks, lists, tags, taskTags, focusSessions, appSettings] = await Promise.all([
+    const [tasks, lists, tags, taskTags, focusSessions, appSettings, projects, projectTasks] = await Promise.all([
       database.tasks.toArray(),
       database.lists.toArray(),
       database.tags.toArray(),
       database.taskTags.toArray(),
       database.focusSessions.toArray(),
       database.appSettings.toArray(),
+      database.projects.toArray(),
+      database.projectTasks.toArray(),
     ])
     return {
       format: BACKUP_FORMAT,
       appVersion: APP_VERSION,
       schemaVersion: SCHEMA_VERSION,
       exportedAt: new Date().toISOString(),
-      data: { tasks, lists, tags, taskTags, focusSessions, appSettings },
+      data: { tasks, lists, tags, taskTags, focusSessions, appSettings, projects, projectTasks },
     }
   } catch (error) {
     throw toDataError(error)
@@ -63,6 +69,8 @@ export function summarizeBackup(backup: RoznoBackup): BackupSummary {
     tags: backup.data.tags.length,
     focusSessions: backup.data.focusSessions.length,
     settings: backup.data.appSettings.length,
+    projects: backup.data.projects?.length ?? 0,
+    projectTasks: backup.data.projectTasks?.length ?? 0,
     exportedAt: backup.exportedAt,
     schemaVersion: backup.schemaVersion,
   }
@@ -78,6 +86,8 @@ export function parseBackup(raw: unknown): RoznoBackup {
   for (const key of ['tasks', 'lists', 'tags', 'taskTags', 'focusSessions', 'appSettings'] as const) {
     if (!Array.isArray(data[key])) throw new DataError('UNKNOWN')
   }
+  const projects = Array.isArray(data.projects) ? (data.projects as Project[]) : []
+  const projectTasks = Array.isArray(data.projectTasks) ? (data.projectTasks as ProjectTask[]) : []
   return {
     format: BACKUP_FORMAT,
     appVersion: typeof raw.appVersion === 'string' ? raw.appVersion : APP_VERSION,
@@ -90,6 +100,8 @@ export function parseBackup(raw: unknown): RoznoBackup {
       taskTags: data.taskTags as TaskTag[],
       focusSessions: data.focusSessions as FocusSession[],
       appSettings: data.appSettings as AppSetting[],
+      projects,
+      projectTasks,
     },
   }
 }
@@ -103,6 +115,8 @@ async function withAllTables(database: RoznoDatabase, work: () => Promise<void>)
     database.taskTags,
     database.focusSessions,
     database.appSettings,
+    database.projects,
+    database.projectTasks,
   ]
   await (database as unknown as { transaction: (mode: string, storeNames: unknown[], scope: () => Promise<void>) => Promise<void> }).transaction(
     'rw',
@@ -121,11 +135,15 @@ export async function importBackup(backup: RoznoBackup, database: RoznoDatabase 
         database.taskTags.clear(),
         database.focusSessions.clear(),
         database.appSettings.clear(),
+        database.projects.clear(),
+        database.projectTasks.clear(),
       ])
       if (backup.data.lists.length) await database.lists.bulkPut(backup.data.lists as TaskList[])
       if (backup.data.tags.length) await database.tags.bulkPut(backup.data.tags as Tag[])
       if (backup.data.tasks.length) await database.tasks.bulkPut(backup.data.tasks as Task[])
       if (backup.data.taskTags.length) await database.taskTags.bulkPut(backup.data.taskTags as TaskTag[])
+      if (backup.data.projects.length) await database.projects.bulkPut(backup.data.projects)
+      if (backup.data.projectTasks.length) await database.projectTasks.bulkPut(backup.data.projectTasks)
       if (backup.data.focusSessions.length) {
         await database.focusSessions.bulkPut(backup.data.focusSessions as FocusSession[])
       }
@@ -149,6 +167,8 @@ export async function clearAllData(database: RoznoDatabase = db): Promise<void> 
         database.taskTags.clear(),
         database.focusSessions.clear(),
         database.appSettings.clear(),
+        database.projects.clear(),
+        database.projectTasks.clear(),
       ])
     })
   } catch (error) {

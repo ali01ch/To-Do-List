@@ -1,6 +1,6 @@
 export const APP_VERSION = '0.2.0'
 export const DB_NAME = 'rozno'
-export const SCHEMA_VERSION = 1
+export const SCHEMA_VERSION = 2
 
 /** Pre-paint cache only. IndexedDB remains the source of truth after startup. */
 export const THEME_MIRROR_KEY = 'rozno-theme'

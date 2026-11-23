@@ -7,9 +7,15 @@ import type {
   ListIcon,
   NewFocusSession,
   NewTag,
+  NewProject,
+  NewProjectTask,
   NewTask,
   NewTaskList,
   Priority,
+  Project,
+  ProjectPatch,
+  ProjectTask,
+  ProjectTaskPatch,
   RecurrenceRule,
   Tag,
   TagPatch,
@@ -135,6 +141,84 @@ export function buildList(input: NewTaskList, sortOrder = nowSort()): TaskList {
     createdAt: now,
     updatedAt: now,
   }
+}
+
+export function buildProject(input: NewProject, sortOrder = nowSort()): Project {
+  const name = input.name.trim()
+  if (!name) throw new DataError('NAME_REQUIRED')
+  const color = input.color ?? 'iris'
+  const icon = input.icon ?? 'briefcase'
+  if (!isListColor(color)) throw new DataError('INVALID_COLOR')
+  if (!isListIcon(icon)) throw new DataError('INVALID_ICON')
+  const targetOn = input.targetOn ?? null
+  if (targetOn !== null && !isDateOnly(targetOn)) throw new DataError('INVALID_DATE')
+  const now = nowIso()
+  return {
+    id: createId(),
+    name,
+    description: input.description?.trim() ?? '',
+    color,
+    icon,
+    targetOn,
+    sortOrder: input.sortOrder ?? sortOrder,
+    archivedAt: null,
+    createdAt: now,
+    updatedAt: now,
+  }
+}
+
+export function mergeProject(current: Project, patch: ProjectPatch): Project {
+  const targetOn = patch.targetOn !== undefined ? patch.targetOn : current.targetOn
+  if (targetOn !== null && !isDateOnly(targetOn)) throw new DataError('INVALID_DATE')
+  const next: Project = {
+    ...current,
+    name: patch.name !== undefined ? patch.name.trim() : current.name,
+    description: patch.description !== undefined ? patch.description.trim() : current.description,
+    color: patch.color !== undefined ? patch.color : current.color,
+    icon: patch.icon !== undefined ? patch.icon : current.icon,
+    targetOn,
+    sortOrder: patch.sortOrder !== undefined ? patch.sortOrder : current.sortOrder,
+    updatedAt: nowIso(),
+  }
+  if (!next.name) throw new DataError('NAME_REQUIRED')
+  if (!isListColor(next.color)) throw new DataError('INVALID_COLOR')
+  if (!isListIcon(next.icon)) throw new DataError('INVALID_ICON')
+  if (!Number.isFinite(next.sortOrder)) throw new DataError('UNKNOWN')
+  return next
+}
+
+function assertProjectTaskFields(task: Pick<ProjectTask, 'title' | 'sortOrder'>): void {
+  if (!task.title.trim()) throw new DataError('TITLE_REQUIRED')
+  if (!Number.isFinite(task.sortOrder)) throw new DataError('UNKNOWN')
+}
+
+export function buildProjectTask(input: NewProjectTask, sortOrder = nowSort()): ProjectTask {
+  const now = nowIso()
+  const task: ProjectTask = {
+    id: createId(),
+    projectId: input.projectId,
+    title: input.title.trim(),
+    description: input.description?.trim() ?? '',
+    completedAt: null,
+    sortOrder: input.sortOrder ?? sortOrder,
+    createdAt: now,
+    updatedAt: now,
+    deletedAt: null,
+  }
+  assertProjectTaskFields(task)
+  return task
+}
+
+export function mergeProjectTask(current: ProjectTask, patch: ProjectTaskPatch): ProjectTask {
+  const next: ProjectTask = {
+    ...current,
+    title: patch.title !== undefined ? patch.title.trim() : current.title,
+    description: patch.description !== undefined ? patch.description.trim() : current.description,
+    sortOrder: patch.sortOrder !== undefined ? patch.sortOrder : current.sortOrder,
+    updatedAt: nowIso(),
+  }
+  assertProjectTaskFields(next)
+  return next
 }
 
 export function mergeList(current: TaskList, patch: TaskListPatch): TaskList {

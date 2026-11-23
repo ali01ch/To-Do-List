@@ -9,6 +9,7 @@ import ActionToast from '@/components/ActionToast.vue'
 import ConfirmDialog from '@/components/ConfirmDialog.vue'
 import InstallBanner from '@/components/InstallBanner.vue'
 import PwaUpdateBanner from '@/components/PwaUpdateBanner.vue'
+import ProjectTaskSheet from '@/components/ProjectTaskSheet.vue'
 import TaskSheet from '@/components/TaskSheet.vue'
 import { checkForAppUpdate } from '@/composables/usePwaUpdate'
 import { usePullToRefresh } from '@/composables/usePullToRefresh'
@@ -265,6 +266,7 @@ onUnmounted(() => window.removeEventListener('keydown', onKeydown))
       :duration-ms="NOTICE_DURATION_MS"
     />
     <TaskSheet />
+    <ProjectTaskSheet />
     <InstallBanner />
     <PwaUpdateBanner />
     <ConfirmDialog

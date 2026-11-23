@@ -1,6 +1,6 @@
 import Dexie, { type EntityTable, type Table } from 'dexie'
 import { DB_NAME, SCHEMA_VERSION } from '@/app/version'
-import type { AppSetting, FocusSession, Tag, Task, TaskList, TaskTag } from '@/domain/types'
+import type { AppSetting, FocusSession, Project, ProjectTask, Tag, Task, TaskList, TaskTag } from '@/domain/types'
 
 export interface RoznoDatabase extends Dexie {
   tasks: EntityTable<Task, 'id'>
@@ -9,6 +9,8 @@ export interface RoznoDatabase extends Dexie {
   taskTags: Table<TaskTag, [string, string]>
   focusSessions: EntityTable<FocusSession, 'id'>
   appSettings: EntityTable<AppSetting, 'key'>
+  projects: EntityTable<Project, 'id'>
+  projectTasks: EntityTable<ProjectTask, 'id'>
 }
 
 /**
@@ -16,15 +18,22 @@ export interface RoznoDatabase extends Dexie {
  * Adding or renaming an index later requires a new Dexie version.
  * Nullable fields are not relied on for existence queries.
  */
+const BASE_STORES = {
+  tasks: 'id, listId, dueOn, priority, completedAt, updatedAt, sortOrder, reminderAt',
+  lists: 'id, sortOrder, archivedAt',
+  tags: 'id, name',
+  taskTags: '[taskId+tagId], taskId, tagId',
+  focusSessions: 'id, taskId, startedAt, status',
+  appSettings: 'key',
+} as const
+
 export function createDatabase(name = DB_NAME): RoznoDatabase {
   const database = new Dexie(name) as RoznoDatabase
+  database.version(1).stores(BASE_STORES)
   database.version(SCHEMA_VERSION).stores({
-    tasks: 'id, listId, dueOn, priority, completedAt, updatedAt, sortOrder, reminderAt',
-    lists: 'id, sortOrder, archivedAt',
-    tags: 'id, name',
-    taskTags: '[taskId+tagId], taskId, tagId',
-    focusSessions: 'id, taskId, startedAt, status',
-    appSettings: 'key',
+    ...BASE_STORES,
+    projects: 'id, sortOrder, archivedAt, targetOn',
+    projectTasks: 'id, projectId, completedAt, sortOrder, updatedAt',
   })
   return database
 }
