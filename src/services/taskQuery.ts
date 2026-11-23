@@ -40,11 +40,23 @@ function bySchedule(left: Task, right: Task): number {
   return left.sortOrder - right.sortOrder || left.createdAt.localeCompare(right.createdAt)
 }
 
+export function compareTasksByPriority(left: Task, right: Task): number {
+  const byPriority = PRIORITY_RANK[left.priority] - PRIORITY_RANK[right.priority]
+  if (byPriority !== 0) return byPriority
+  return left.sortOrder - right.sortOrder || left.createdAt.localeCompare(right.createdAt)
+}
+
+function byPriorityThenSchedule(left: Task, right: Task): number {
+  const byPriority = PRIORITY_RANK[left.priority] - PRIORITY_RANK[right.priority]
+  if (byPriority !== 0) return byPriority
+  return bySchedule(left, right)
+}
+
 export function todayBuckets(tasks: Task[], today: string): TaskBuckets {
   const visible = tasks.filter((task) => task.deletedAt === null)
   return {
-    overdue: visible.filter((task) => isOpen(task) && task.dueOn !== null && task.dueOn < today).sort(bySchedule),
-    today: visible.filter((task) => isOpen(task) && task.dueOn === today).sort(bySchedule),
+    overdue: visible.filter((task) => isOpen(task) && task.dueOn !== null && task.dueOn < today).sort(byPriorityThenSchedule),
+    today: visible.filter((task) => isOpen(task) && task.dueOn === today).sort(byPriorityThenSchedule),
     completedToday: visible
       .filter((task) => task.completedAt !== null && localDateFromIso(task.completedAt) === today)
       .sort((left, right) => (right.completedAt ?? '').localeCompare(left.completedAt ?? '')),
@@ -52,13 +64,11 @@ export function todayBuckets(tasks: Task[], today: string): TaskBuckets {
 }
 
 export function upcomingTasks(tasks: Task[], today: string): Task[] {
-  return tasks.filter((task) => isOpen(task) && task.dueOn !== null && task.dueOn > today).sort(bySchedule)
+  return tasks.filter((task) => isOpen(task) && task.dueOn !== null && task.dueOn > today).sort(byPriorityThenSchedule)
 }
 
 export function inboxTasks(tasks: Task[]): Task[] {
-  return tasks
-    .filter((task) => isOpen(task) && task.dueOn === null)
-    .sort((left, right) => left.sortOrder - right.sortOrder || left.createdAt.localeCompare(right.createdAt))
+  return tasks.filter((task) => isOpen(task) && task.dueOn === null).sort(compareTasksByPriority)
 }
 
 export function groupByDueOn(tasks: Task[]): { dueOn: string; tasks: Task[] }[] {
@@ -71,7 +81,7 @@ export function groupByDueOn(tasks: Task[]): { dueOn: string; tasks: Task[] }[] 
   }
   return [...groups.entries()]
     .sort(([left], [right]) => left.localeCompare(right))
-    .map(([dueOn, grouped]) => ({ dueOn, tasks: grouped }))
+    .map(([dueOn, grouped]) => ({ dueOn, tasks: [...grouped].sort(compareTasksByPriority) }))
 }
 
 function matchesSearch(task: Task, search: string): boolean {

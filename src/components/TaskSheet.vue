@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
 import type { Priority, RecurrenceRule } from '@/domain/types'
-import { PRIORITIES } from '@/domain/types'
+import TaskPriorityPicker from '@/components/TaskPriorityPicker.vue'
 import AppSheet from '@/components/AppSheet.vue'
 import JalaliDatePicker from '@/components/JalaliDatePicker.vue'
 import { fa } from '@/locales/fa'
@@ -199,15 +199,10 @@ async function save(): Promise<void> {
           </p>
         </fieldset>
 
-        <fieldset class="mt-3">
-          <legend class="text-sm">{{ fa.task.priority }}</legend>
-          <div class="mt-2 grid grid-cols-2 gap-2">
-            <label v-for="item in PRIORITIES" :key="item" class="flex min-h-11 items-center justify-center rounded-xl border border-line text-sm has-[:checked]:border-accent has-[:checked]:bg-accent-soft">
-              <input v-model="priority" class="sr-only" type="radio" name="priority" :value="item" />
-              {{ fa.priority[item] }}
-            </label>
-          </div>
-        </fieldset>
+        <div class="mt-3">
+          <p class="text-sm">{{ fa.task.priority }}</p>
+          <TaskPriorityPicker v-model="priority" class="mt-2" />
+        </div>
 
         <label class="mt-3 block text-sm" for="task-list">{{ fa.task.list }}</label>
         <select id="task-list" v-model="listId" class="mt-1 min-h-11 w-full rounded-xl border border-line bg-canvas px-3 text-sm">

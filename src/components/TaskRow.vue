@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ArrowDown, ArrowUp, Pencil, Trash2 } from '@lucide/vue'
+import TaskPriorityIcon from '@/components/TaskPriorityIcon.vue'
 import type { Task, TaskList } from '@/domain/types'
 import { fa } from '@/locales/fa'
 import { formatDueWithState } from '@/services/duePhrase'
@@ -57,7 +58,6 @@ const today = todayDueOn()
     <div class="min-w-0 flex-1 py-1 text-start">
       <span class="block truncate text-sm font-medium" :class="task.completedAt ? 'line-through' : ''">{{ task.title }}</span>
       <span class="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-muted">
-        <span v-if="task.priority !== 'none'">{{ fa.priority[task.priority] }}</span>
         <span v-if="formatDueWithState(task.dueOn, today)" :class="task.dueOn && task.dueOn < today && !task.completedAt ? 'text-overdue' : ''">
           {{ formatDueWithState(task.dueOn, today) }}
           <span v-if="task.dueTime"> {{ toPersianDigits(task.dueTime) }}</span>
@@ -80,6 +80,7 @@ const today = todayDueOn()
       <button type="button" class="grid size-11 place-items-center text-muted" :aria-label="fa.task.edit" @click="emit('edit')">
         <Pencil :size="18" :stroke-width="1.75" aria-hidden="true" />
       </button>
+      <TaskPriorityIcon :priority="task.priority" />
       <button
         v-if="canMoveUp"
         type="button"
