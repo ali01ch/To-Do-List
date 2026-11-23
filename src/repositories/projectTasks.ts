@@ -2,6 +2,7 @@ import type { RoznoDatabase } from '@/db/database'
 import { DataError, guard } from '@/domain/errors'
 import type { NewProjectTask, ProjectTask, ProjectTaskPatch } from '@/domain/types'
 import { buildProjectTask, mergeProjectTask } from '@/domain/validation'
+import { compareProjectTasksByPriority } from '@/services/projectQuery'
 import { nowIso } from '@/utils/dates'
 
 export function createProjectTaskRepository(database: RoznoDatabase) {
@@ -20,7 +21,7 @@ export function createProjectTaskRepository(database: RoznoDatabase) {
         const rows = await database.projectTasks.where('projectId').equals(projectId).toArray()
         return rows
           .filter((task) => task.deletedAt === null && (includeCompleted || task.completedAt === null))
-          .sort((a, b) => a.sortOrder - b.sortOrder || a.createdAt.localeCompare(b.createdAt))
+          .sort(compareProjectTasksByPriority)
       })
     },
 

@@ -39,6 +39,12 @@ export type EditorState = { mode: 'create'; title: string; dueOn: string | null;
 
 export type ProjectTaskEditorState = { mode: 'edit'; taskId: string }
 
+interface PendingProjectTaskToggle {
+  id: string
+  label: string
+  completing: boolean
+}
+
 export type PendingDelete =
   | { kind: 'task'; id: string; label: string }
   | { kind: 'tasks'; ids: string[]; count: number }
@@ -71,10 +77,29 @@ export const useCatalogStore = defineStore('catalog', () => {
   const notice = ref<string | null>(null)
   const pendingDelete = ref<PendingDelete | null>(null)
   const deleteBusy = ref(false)
+  const pendingProjectTaskToggle = ref<PendingProjectTaskToggle | null>(null)
+  const projectTaskToggleBusy = ref(false)
   let createLock = false
   let undoTimer = 0
   let noticeTimer = 0
   let resolvePendingDelete: ((confirmed: boolean) => void) | null = null
+  let resolvePendingProjectTaskToggle: ((confirmed: boolean) => void) | null = null
+
+  const projectTaskToggleDialog = computed(() => {
+    const pending = pendingProjectTaskToggle.value
+    if (!pending) return null
+    return pending.completing
+      ? {
+          title: fa.project.confirmCompleteNamed.replace('{title}', pending.label),
+          body: fa.project.confirmToggleBody,
+          confirmLabel: fa.task.complete,
+        }
+      : {
+          title: fa.project.confirmUncompleteNamed.replace('{title}', pending.label),
+          body: fa.project.confirmToggleBody,
+          confirmLabel: fa.task.uncomplete,
+        }
+  })
 
   const deleteDialog = computed(() => {
     const pending = pendingDelete.value
@@ -290,6 +315,11 @@ export const useCatalogStore = defineStore('catalog', () => {
   }
 
   function askDelete(pending: PendingDelete): Promise<boolean> {
+    if (resolvePendingProjectTaskToggle) {
+      resolvePendingProjectTaskToggle(false)
+      resolvePendingProjectTaskToggle = null
+    }
+    pendingProjectTaskToggle.value = null
     if (resolvePendingDelete) resolvePendingDelete(false)
     pendingDelete.value = pending
     return new Promise((resolve) => {
@@ -578,6 +608,57 @@ export const useCatalogStore = defineStore('catalog', () => {
     }
   }
 
+  function askProjectTaskToggle(pending: PendingProjectTaskToggle): Promise<boolean> {
+    if (resolvePendingDelete) {
+      resolvePendingDelete(false)
+      resolvePendingDelete = null
+    }
+    pendingDelete.value = null
+    if (resolvePendingProjectTaskToggle) resolvePendingProjectTaskToggle(false)
+    pendingProjectTaskToggle.value = pending
+    return new Promise((resolve) => {
+      resolvePendingProjectTaskToggle = resolve
+    })
+  }
+
+  function cancelPendingProjectTaskToggle(): void {
+    if (projectTaskToggleBusy.value) return
+    pendingProjectTaskToggle.value = null
+    resolvePendingProjectTaskToggle?.(false)
+    resolvePendingProjectTaskToggle = null
+  }
+
+  async function confirmPendingProjectTaskToggle(): Promise<void> {
+    const pending = pendingProjectTaskToggle.value
+    const resolve = resolvePendingProjectTaskToggle
+    if (!pending || projectTaskToggleBusy.value) {
+      if (!pending) {
+        resolvePendingProjectTaskToggle = null
+        resolve?.(false)
+      }
+      return
+    }
+    projectTaskToggleBusy.value = true
+    try {
+      await toggleProjectTaskComplete(pending.id)
+      pendingProjectTaskToggle.value = null
+      resolvePendingProjectTaskToggle = null
+      resolve?.(actionError.value === null)
+    } finally {
+      projectTaskToggleBusy.value = false
+    }
+  }
+
+  function requestToggleProjectTaskComplete(id: string): void {
+    const task = projectTasks.value.find((item) => item.id === id)
+    if (!task) return
+    void askProjectTaskToggle({
+      id,
+      label: task.title,
+      completing: task.completedAt === null,
+    })
+  }
+
   function openProjectTaskEdit(taskId: string): void {
     projectTaskEditor.value = { mode: 'edit', taskId }
   }
@@ -656,6 +737,8 @@ export const useCatalogStore = defineStore('catalog', () => {
     pendingDelete,
     deleteBusy,
     deleteDialog,
+    projectTaskToggleDialog,
+    projectTaskToggleBusy,
     tagsByTask,
     activeLists,
     load,
@@ -684,6 +767,9 @@ export const useCatalogStore = defineStore('catalog', () => {
     createProjectTask,
     updateProjectTask,
     toggleProjectTaskComplete,
+    requestToggleProjectTaskComplete,
+    cancelPendingProjectTaskToggle,
+    confirmPendingProjectTaskToggle,
     openProjectTaskEdit,
     closeProjectTaskEditor,
     requestRemoveProjectTask,

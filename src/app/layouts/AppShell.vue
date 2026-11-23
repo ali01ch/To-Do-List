@@ -278,5 +278,15 @@ onUnmounted(() => window.removeEventListener('keydown', onKeydown))
       @cancel="catalog.cancelPendingDelete()"
       @confirm="catalog.confirmPendingDelete()"
     />
+    <ConfirmDialog
+      :open="catalog.projectTaskToggleDialog !== null"
+      :title="catalog.projectTaskToggleDialog?.title ?? ''"
+      :body="catalog.projectTaskToggleDialog?.body ?? ''"
+      :confirm-label="catalog.projectTaskToggleDialog?.confirmLabel ?? fa.task.complete"
+      tone="accent"
+      :busy="catalog.projectTaskToggleBusy"
+      @cancel="catalog.cancelPendingProjectTaskToggle()"
+      @confirm="catalog.confirmPendingProjectTaskToggle()"
+    />
   </div>
 </template>

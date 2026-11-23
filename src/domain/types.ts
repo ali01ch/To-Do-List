@@ -68,6 +68,7 @@ export interface ProjectTask {
   projectId: string
   title: string
   description: string
+  priority: Priority
   completedAt: string | null
   sortOrder: number
   createdAt: string
@@ -167,10 +168,11 @@ export interface NewProjectTask {
   projectId: string
   title: string
   description?: string
+  priority?: Priority
   sortOrder?: number
 }
 
-export type ProjectTaskPatch = Partial<Pick<ProjectTask, 'title' | 'description' | 'sortOrder'>>
+export type ProjectTaskPatch = Partial<Pick<ProjectTask, 'title' | 'description' | 'priority' | 'sortOrder'>>
 
 export interface NewTag {
   name: string

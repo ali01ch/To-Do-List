@@ -27,14 +27,33 @@ const BASE_STORES = {
   appSettings: 'key',
 } as const
 
+const STORES_V2 = {
+  ...BASE_STORES,
+  projects: 'id, sortOrder, archivedAt, targetOn',
+  projectTasks: 'id, projectId, completedAt, sortOrder, updatedAt',
+} as const
+
+const STORES_V3 = {
+  ...BASE_STORES,
+  projects: 'id, sortOrder, archivedAt, targetOn',
+  projectTasks: 'id, projectId, priority, completedAt, sortOrder, updatedAt',
+} as const
+
 export function createDatabase(name = DB_NAME): RoznoDatabase {
   const database = new Dexie(name) as RoznoDatabase
   database.version(1).stores(BASE_STORES)
-  database.version(SCHEMA_VERSION).stores({
-    ...BASE_STORES,
-    projects: 'id, sortOrder, archivedAt, targetOn',
-    projectTasks: 'id, projectId, completedAt, sortOrder, updatedAt',
-  })
+  database.version(2).stores(STORES_V2)
+  database
+    .version(SCHEMA_VERSION)
+    .stores(STORES_V3)
+    .upgrade(async (transaction) => {
+      await transaction
+        .table('projectTasks')
+        .toCollection()
+        .modify((task: ProjectTask) => {
+          if (task.priority === undefined) task.priority = 'none'
+        })
+    })
   return database
 }
 

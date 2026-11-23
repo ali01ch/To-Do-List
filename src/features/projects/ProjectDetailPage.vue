@@ -1,10 +1,12 @@
 <script setup lang="ts">
-import { ChevronRight } from '@lucide/vue'
+import { ChevronRight, Plus } from '@lucide/vue'
 import { computed, ref, watch } from 'vue'
 import { RouterLink, useRoute, useRouter } from 'vue-router'
+import AppButton from '@/components/AppButton.vue'
 import EmptyState from '@/components/EmptyState.vue'
 import JalaliDatePicker from '@/components/JalaliDatePicker.vue'
 import PageHeader from '@/components/PageHeader.vue'
+import ProjectTaskCreateSheet from '@/components/ProjectTaskCreateSheet.vue'
 import ProjectTaskRow from '@/components/ProjectTaskRow.vue'
 import { listColorClass } from '@/features/lists/listStyle'
 import { fa } from '@/locales/fa'
@@ -26,9 +28,7 @@ const tasks = computed(() =>
 )
 const progress = computed(() => (project.value ? progressForProject(catalog.projectTasks, project.value.id) : { done: 0, total: 0, percent: 0 }))
 
-const taskTitle = ref('')
-const taskDescription = ref('')
-const addPending = ref(false)
+const createTaskOpen = ref(false)
 const editDescription = ref(false)
 const editTarget = ref(false)
 const descriptionDraft = ref('')
@@ -48,24 +48,6 @@ async function remove(): Promise<void> {
   if (!project.value) return
   const confirmed = await catalog.requestRemoveProject(project.value.id)
   if (confirmed) await router.push({ name: 'projects' })
-}
-
-async function addTask(): Promise<void> {
-  if (!project.value || addPending.value || !taskTitle.value.trim()) return
-  addPending.value = true
-  try {
-    const task = await catalog.createProjectTask({
-      projectId: project.value.id,
-      title: taskTitle.value,
-      description: taskDescription.value,
-    })
-    if (task) {
-      taskTitle.value = ''
-      taskDescription.value = ''
-    }
-  } finally {
-    addPending.value = false
-  }
 }
 
 async function saveDescription(): Promise<void> {
@@ -130,41 +112,33 @@ async function saveTarget(): Promise<void> {
         <button type="button" class="min-h-11 rounded-xl bg-accent px-3 text-sm text-accent-ink" @click="saveTarget">{{ fa.task.save }}</button>
       </div>
       <p v-else-if="project.description" class="mt-3 whitespace-pre-wrap text-sm text-muted">{{ project.description }}</p>
-      <label class="mt-3 flex min-h-11 items-center gap-2 text-sm">
-        <input v-model="view.includeCompletedInProject" type="checkbox" class="size-5" />
-        {{ fa.task.showCompletedInProject }}
-      </label>
-      <form class="mt-4 space-y-2 rounded-2xl border border-line bg-surface-muted/50 p-3" @submit.prevent="addTask">
-        <input
-          v-model="taskTitle"
-          class="min-h-11 w-full rounded-xl border border-line bg-surface px-3 text-sm"
-          :placeholder="fa.project.taskPlaceholder"
-        />
-        <textarea
-          v-model="taskDescription"
-          rows="2"
-          class="w-full resize-y rounded-xl border border-line bg-surface px-3 py-2 text-sm"
-          :placeholder="fa.project.taskDescription"
-        />
-        <button
-          type="submit"
-          class="min-h-11 w-full rounded-xl bg-accent text-sm font-medium text-accent-ink disabled:opacity-50"
-          :disabled="addPending || !taskTitle.trim()"
-        >
-          {{ fa.project.addTask }}
-        </button>
-      </form>
-      <EmptyState v-if="tasks.length === 0" :title="fa.empty.projectTasksTitle" :description="fa.empty.projectTasksBody" />
+
+      <div class="mt-5 flex flex-wrap items-center gap-3">
+        <AppButton type="button" @click="createTaskOpen = true">
+          <Plus :size="18" :stroke-width="2" aria-hidden="true" />
+          {{ fa.project.newTask }}
+        </AppButton>
+        <label class="flex min-h-11 items-center gap-2 text-sm">
+          <input v-model="view.includeCompletedInProject" type="checkbox" class="size-5" />
+          {{ fa.task.showCompletedInProject }}
+        </label>
+      </div>
+
+      <EmptyState v-if="tasks.length === 0" :title="fa.empty.projectTasksTitle" :description="fa.empty.projectTasksBody">
+        <AppButton type="button" class="mt-4" @click="createTaskOpen = true">{{ fa.project.newTask }}</AppButton>
+      </EmptyState>
       <ul v-else class="mt-4 space-y-2">
         <li v-for="task in tasks" :key="task.id">
           <ProjectTaskRow
             :task="task"
-            @toggle="catalog.toggleProjectTaskComplete(task.id)"
+            @toggle="catalog.requestToggleProjectTaskComplete(task.id)"
             @edit="catalog.openProjectTaskEdit(task.id)"
             @remove="catalog.requestRemoveProjectTask(task.id)"
           />
         </li>
       </ul>
+
+      <ProjectTaskCreateSheet v-model="createTaskOpen" :project-id="project.id" />
     </template>
   </section>
 </template>

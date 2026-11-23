@@ -20,7 +20,7 @@ export interface TaskFilter {
 export type TaskSort = 'manual' | 'due' | 'priority' | 'title'
 export type CompletedRange = 'today' | 'week' | 'month' | 'all'
 
-const PRIORITY_RANK: Record<Priority, number> = { high: 0, medium: 1, low: 2, none: 3 }
+export const PRIORITY_RANK: Record<Priority, number> = { high: 0, medium: 1, low: 2, none: 3 }
 
 export function localDateFromIso(iso: string): string | null {
   const date = new Date(iso)

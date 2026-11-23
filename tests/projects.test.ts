@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { createProjectRepository } from '@/repositories/projects'
 import { createProjectTaskRepository } from '@/repositories/projectTasks'
-import { progressForProject } from '@/services/projectQuery'
+import { compareProjectTasksByPriority, progressForProject } from '@/services/projectQuery'
 import { openTestDatabase } from './helpers'
 
 describe('projects', () => {
@@ -25,5 +25,19 @@ describe('projects', () => {
     await projects.remove(project.id)
     expect(await db.projectTasks.where('projectId').equals(project.id).count()).toBe(0)
     expect(second.id).toBeTruthy()
+  })
+
+  it('sorts project tasks by priority high to low', async () => {
+    const db = openTestDatabase()
+    const projects = createProjectRepository(db)
+    const taskRepo = createProjectTaskRepository(db)
+    const project = await projects.create({ name: 'مرتب‌سازی' })
+    const low = await taskRepo.create({ projectId: project.id, title: 'کم', priority: 'low' })
+    const high = await taskRepo.create({ projectId: project.id, title: 'زیاد', priority: 'high' })
+    const none = await taskRepo.create({ projectId: project.id, title: 'بدون', priority: 'none' })
+    const rows = await taskRepo.listByProject(project.id)
+    const sorted = [...rows].sort(compareProjectTasksByPriority)
+    expect(sorted.map((item) => item.id)).toEqual([high.id, low.id, none.id])
+    expect(high.priority).toBe('high')
   })
 })

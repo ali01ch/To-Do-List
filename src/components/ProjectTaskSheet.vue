@@ -1,12 +1,15 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
 import AppSheet from '@/components/AppSheet.vue'
+import type { Priority } from '@/domain/types'
+import ProjectTaskPriorityPicker from '@/components/ProjectTaskPriorityPicker.vue'
 import { fa } from '@/locales/fa'
 import { useCatalogStore } from '@/stores/catalogStore'
 
 const catalog = useCatalogStore()
 const title = ref('')
 const description = ref('')
+const priority = ref<Priority>('none')
 const pending = ref(false)
 
 const open = computed(() => catalog.projectTaskEditor !== null)
@@ -25,6 +28,7 @@ watch(
     if (!task) return
     title.value = task.title
     description.value = task.description
+    priority.value = task.priority ?? 'none'
   },
   { immediate: true },
 )
@@ -34,7 +38,11 @@ async function save(): Promise<void> {
   if (pending.value || !task || !title.value.trim()) return
   pending.value = true
   try {
-    await catalog.updateProjectTask(task.id, { title: title.value, description: description.value })
+    await catalog.updateProjectTask(task.id, {
+      title: title.value,
+      description: description.value,
+      priority: priority.value,
+    })
     catalog.closeProjectTaskEditor()
   } finally {
     pending.value = false
@@ -57,6 +65,8 @@ async function save(): Promise<void> {
         rows="4"
         class="w-full resize-y rounded-xl border border-line bg-surface px-3 py-2 text-sm"
       />
+      <p class="text-sm">{{ fa.task.priority }}</p>
+      <ProjectTaskPriorityPicker v-model="priority" />
       <div class="flex gap-2 pt-2">
         <button type="submit" class="min-h-11 flex-1 rounded-xl bg-accent px-4 text-sm font-medium text-accent-ink disabled:opacity-50" :disabled="pending || !title.trim()">
           {{ fa.task.save }}

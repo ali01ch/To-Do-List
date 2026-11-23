@@ -187,8 +187,9 @@ export function mergeProject(current: Project, patch: ProjectPatch): Project {
   return next
 }
 
-function assertProjectTaskFields(task: Pick<ProjectTask, 'title' | 'sortOrder'>): void {
+function assertProjectTaskFields(task: Pick<ProjectTask, 'title' | 'priority' | 'sortOrder'>): void {
   if (!task.title.trim()) throw new DataError('TITLE_REQUIRED')
+  if (!isPriority(task.priority)) throw new DataError('INVALID_PRIORITY')
   if (!Number.isFinite(task.sortOrder)) throw new DataError('UNKNOWN')
 }
 
@@ -199,6 +200,7 @@ export function buildProjectTask(input: NewProjectTask, sortOrder = nowSort()): 
     projectId: input.projectId,
     title: input.title.trim(),
     description: input.description?.trim() ?? '',
+    priority: input.priority ?? 'none',
     completedAt: null,
     sortOrder: input.sortOrder ?? sortOrder,
     createdAt: now,
@@ -214,6 +216,7 @@ export function mergeProjectTask(current: ProjectTask, patch: ProjectTaskPatch):
     ...current,
     title: patch.title !== undefined ? patch.title.trim() : current.title,
     description: patch.description !== undefined ? patch.description.trim() : current.description,
+    priority: patch.priority !== undefined ? patch.priority : current.priority,
     sortOrder: patch.sortOrder !== undefined ? patch.sortOrder : current.sortOrder,
     updatedAt: nowIso(),
   }

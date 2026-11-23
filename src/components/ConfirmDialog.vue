@@ -2,13 +2,17 @@
 import { nextTick, ref, useId, watch } from 'vue'
 import { fa } from '@/locales/fa'
 
-const props = defineProps<{
-  open: boolean
-  title: string
-  body: string
-  confirmLabel?: string
-  busy?: boolean
-}>()
+const props = withDefaults(
+  defineProps<{
+    open: boolean
+    title: string
+    body: string
+    confirmLabel?: string
+    busy?: boolean
+    tone?: 'danger' | 'accent'
+  }>(),
+  { tone: 'danger' },
+)
 
 const emit = defineEmits<{
   confirm: []
@@ -63,7 +67,12 @@ function onKeydown(event: KeyboardEvent): void {
         <div class="mt-5 grid grid-cols-2 gap-2">
           <button
             type="button"
-            class="inline-flex min-h-11 items-center justify-center rounded-xl bg-danger-soft px-3 text-sm font-medium text-danger transition-opacity disabled:opacity-50"
+            class="inline-flex min-h-11 items-center justify-center rounded-xl px-3 text-sm font-medium transition-opacity disabled:opacity-50"
+            :class="
+              tone === 'accent'
+                ? 'bg-accent text-accent-ink hover:opacity-90'
+                : 'bg-danger-soft text-danger'
+            "
             :disabled="busy"
             @click="emit('confirm')"
           >

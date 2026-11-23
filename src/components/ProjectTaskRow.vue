@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { Pencil, Trash2 } from '@lucide/vue'
 import type { ProjectTask } from '@/domain/types'
+import ProjectTaskPriorityIcon from '@/components/ProjectTaskPriorityIcon.vue'
 import { fa } from '@/locales/fa'
 
 defineProps<{
@@ -42,6 +43,7 @@ const emit = defineEmits<{
       <button type="button" class="grid size-11 place-items-center text-muted" :aria-label="fa.task.edit" @click="emit('edit')">
         <Pencil :size="18" :stroke-width="1.75" aria-hidden="true" />
       </button>
+      <ProjectTaskPriorityIcon :priority="task.priority" />
     </div>
   </article>
 </template>

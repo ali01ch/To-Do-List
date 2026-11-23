@@ -141,7 +141,7 @@ function projectProgress(projectId: string) {
                 :to="{ name: 'projects' }"
                 class="inline-flex h-8 items-center rounded-full border border-dashed border-line px-3 text-xs text-muted transition-colors hover:border-accent/50 hover:bg-accent-soft hover:text-ink"
               >
-                {{ fa.project.create }}
+                {{ fa.project.new }}
               </RouterLink>
             </li>
             <li v-for="project in activeProjectShortcuts" :key="project.id" class="shrink-0">
