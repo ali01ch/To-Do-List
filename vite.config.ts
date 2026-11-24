@@ -6,6 +6,10 @@ import { defineConfig } from 'vitest/config'
 
 /** GitHub Pages project site: https://USERNAME.github.io/To-Do-List/ */
 const base = process.env.VITE_BASE_PATH ?? '/To-Do-List/'
+const baseWithSlash = base.endsWith('/') ? base : `${base}/`
+const baseNoSlash = baseWithSlash.replace(/\/$/, '')
+/** Navigation fallback must match the deployed subpath; relative paths break on some mobile browsers. */
+const navigateFallback = `${baseWithSlash}index.html`
 
 export default defineConfig({
   base,
@@ -16,16 +20,17 @@ export default defineConfig({
       // Activate new SW without waiting for a manual prompt; refresh still
       // needed once to claim clients — pull-to-refresh / focus check handles that.
       registerType: 'autoUpdate',
+      injectRegister: false,
       includeAssets: ['favicon.svg', 'icons/apple-touch-icon.png'],
       manifest: {
-        id: base,
+        id: baseWithSlash,
         name: 'روزنو',
         short_name: 'روزنو',
         description: 'مدیریت کار روی همین دستگاه',
         lang: 'fa',
         dir: 'rtl',
-        start_url: './',
-        scope: './',
+        start_url: baseWithSlash,
+        scope: baseWithSlash,
         display: 'standalone',
         background_color: '#eaf3ee',
         theme_color: '#1a7a4c',
@@ -51,8 +56,9 @@ export default defineConfig({
         ],
       },
       workbox: {
-        navigateFallback: 'index.html',
-        globPatterns: ['**/*.{js,css,html,ico,svg,png,woff2,woff}'],
+        navigateFallback,
+        navigateFallbackAllowlist: [new RegExp(`^${baseNoSlash.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}(?:/|$)`)],
+        globPatterns: ['**/*.{js,css,html,ico,svg,png,webmanifest}'],
         cleanupOutdatedCaches: true,
         clientsClaim: true,
         skipWaiting: true,
