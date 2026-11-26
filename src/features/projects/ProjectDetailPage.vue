@@ -118,10 +118,19 @@ async function saveTarget(): Promise<void> {
           <Plus :size="18" :stroke-width="2" aria-hidden="true" />
           {{ fa.project.newTask }}
         </AppButton>
-        <label class="flex min-h-11 items-center gap-2 text-sm">
-          <input v-model="view.includeCompletedInProject" type="checkbox" class="size-5" />
+        <button
+          type="button"
+          class="inline-flex min-h-11 items-center justify-center rounded-xl px-4 text-sm font-medium transition-colors"
+          :class="
+            view.includeCompletedInProject
+              ? 'bg-accent-soft text-accent ring-1 ring-accent/25'
+              : 'bg-surface-muted text-ink hover:bg-line'
+          "
+          :aria-pressed="view.includeCompletedInProject"
+          @click="view.includeCompletedInProject = !view.includeCompletedInProject"
+        >
           {{ fa.task.showCompletedInProject }}
-        </label>
+        </button>
       </div>
 
       <EmptyState v-if="tasks.length === 0" :title="fa.empty.projectTasksTitle" :description="fa.empty.projectTasksBody">
