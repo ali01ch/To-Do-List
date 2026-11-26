@@ -91,7 +91,11 @@ async function saveTarget(): Promise<void> {
       <p v-if="project.targetOn && formatDueWithState(project.targetOn, today)" class="mt-2 text-sm text-muted">
         {{ fa.project.target }}: {{ formatDueWithState(project.targetOn, today) }}
       </p>
-      <div class="mt-4 flex flex-wrap gap-2">
+      <div class="mt-4 flex flex-wrap items-center gap-2">
+        <AppButton type="button" @click="createTaskOpen = true">
+          <Plus :size="18" :stroke-width="2" aria-hidden="true" />
+          {{ fa.project.newTask }}
+        </AppButton>
         <button type="button" class="min-h-11 rounded-xl bg-surface-muted px-3 text-sm" @click="catalog.setProjectArchived(project.id, project.archivedAt === null)">
           {{ project.archivedAt ? fa.task.unarchive : fa.task.archive }}
         </button>
@@ -113,11 +117,7 @@ async function saveTarget(): Promise<void> {
       </div>
       <p v-else-if="project.description" class="mt-3 whitespace-pre-wrap text-sm text-muted">{{ project.description }}</p>
 
-      <div class="mt-5 flex flex-wrap items-center gap-3">
-        <AppButton type="button" @click="createTaskOpen = true">
-          <Plus :size="18" :stroke-width="2" aria-hidden="true" />
-          {{ fa.project.newTask }}
-        </AppButton>
+      <div class="mt-5">
         <button
           type="button"
           class="inline-flex min-h-11 items-center justify-center rounded-xl px-4 text-sm font-medium transition-colors"
