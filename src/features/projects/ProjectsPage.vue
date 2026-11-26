@@ -43,10 +43,19 @@ function progress(projectId: string) {
           <Plus :size="18" :stroke-width="2" aria-hidden="true" />
           {{ fa.project.new }}
         </AppButton>
-        <label class="flex min-h-11 items-center gap-2 text-sm">
-          <input v-model="view.showArchivedProjects" type="checkbox" class="size-5" />
+        <button
+          type="button"
+          class="inline-flex min-h-11 items-center justify-center rounded-xl px-4 text-sm font-medium transition-colors"
+          :class="
+            view.showArchivedProjects
+              ? 'bg-accent-soft text-accent ring-1 ring-accent/25'
+              : 'bg-surface-muted text-ink hover:bg-line'
+          "
+          :aria-pressed="view.showArchivedProjects"
+          @click="view.showArchivedProjects = !view.showArchivedProjects"
+        >
           {{ fa.project.showArchived }}
-        </label>
+        </button>
       </div>
 
       <EmptyState v-if="visible.length === 0" :title="fa.empty.projectsTitle" :description="fa.empty.projectsBody">
